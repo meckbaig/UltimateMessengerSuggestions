@@ -1,0 +1,60 @@
+using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
+using UltimateMessengerSuggestions.Models.Db;
+using UltimateMessengerSuggestions.Models.Db.Enums;
+
+namespace UltimateMessengerSuggestions.DbContexts;
+
+/// <inheritdoc/>
+public class AppDbContext : DbContext, IAppDbContext
+{
+	/// <inheritdoc/>
+	public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+	{
+	}
+
+	/// <inheritdoc/>
+	public DbSet<Tag> Tags => Set<Tag>();
+
+	/// <inheritdoc/>
+	public DbSet<MediaFile> MediaFiles => Set<MediaFile>();
+
+	/// <inheritdoc/>
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	{
+		modelBuilder.Entity<MediaFile>()
+			.UseTptMappingStrategy();
+		modelBuilder.Entity<VkVoiceMediaFile>()
+			.ToTable(ToSnakeCase(nameof(VkVoiceMediaFile)));
+
+		AddMediaTypeConstraint(modelBuilder);
+
+		base.OnModelCreating(modelBuilder);
+	}
+
+	private static void AddMediaTypeConstraint(ModelBuilder modelBuilder)
+	{
+		var allowedValues = Enum.GetNames(typeof(MediaType)).Select(e => $"'{e.ToLower()}'");
+		var checkConstraint = $"\"{ToSnakeCase(nameof(MediaFile.MediaType))}\" IN ({string.Join(", ", allowedValues)})";
+
+		modelBuilder.Entity<MediaFile>()
+			.Property(m => m.MediaType)
+			.HasConversion<string>();
+
+		modelBuilder.Entity<MediaFile>()
+			.ToTable(t => t.HasCheckConstraint("CK_Message_Type", checkConstraint));
+	}
+
+	/// <inheritdoc/>
+	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+	{
+		optionsBuilder.UseSnakeCaseNamingConvention();
+		base.OnConfiguring(optionsBuilder);
+	}
+
+	private static string ToSnakeCase(string input)
+	{
+		return Regex.Replace(input, @"([a-z0-9])([A-Z])", "$1_$2")
+					.ToLower();
+	}
+}
