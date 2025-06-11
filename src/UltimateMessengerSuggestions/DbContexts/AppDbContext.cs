@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
+using UltimateMessengerSuggestions.Models.Db.ProcedureData;
 
 namespace UltimateMessengerSuggestions.DbContexts;
 
@@ -19,6 +20,10 @@ public class AppDbContext : DbContext, IAppDbContext
 	/// <inheritdoc/>
 	public DbSet<MediaFile> MediaFiles => Set<MediaFile>();
 
+	/// TODO: remove
+	public DbSet<MediaFileSearchResult> MediaFileSearchResults { get; set; }
+
+
 	/// <inheritdoc/>
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -30,6 +35,9 @@ public class AppDbContext : DbContext, IAppDbContext
 			.HasIndex(b => b.Name)
 			.HasMethod("gin")
 			.HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" }); 
+		/// TODO: remove
+		modelBuilder.Entity<MediaFileSearchResult>().HasNoKey();
+
 
 		AddMediaTypeConstraint(modelBuilder);
 

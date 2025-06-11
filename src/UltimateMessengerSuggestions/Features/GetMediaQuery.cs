@@ -115,8 +115,12 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 		/// TODO: remove
 		switch (execType)
 		{
+			case "procedure":
+				return await FindByTagsUsingProcedureAsync(fullPhrases, rawWords, cancellationToken);
 			case "ef":
 				return await FindByTagsUsingEf3Async(fullPhrases, rawWords, cancellationToken);
+			case "ef-compiled":
+				// return FindByTagsUsingEfCompiledAsync(fullPhrases, rawWords, cancellationToken);
 			default:
 				throw new NotImplementedException($"Execution type '{execType}' is not implemented.");
 		}
@@ -234,4 +238,91 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 		return mediaFiles;
 	}
 
+	//private List<MediaFile> FindByTagsUsingEfCompiledAsync(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
+	//{
+	//	// Этап 1: Получаем ID через компилированный запрос
+	//	var mediaFileIds = GetMediaIdsCompiled((AppDbContext)_context, fullPhrases.ToArray(), rawWords.ToArray());
+
+	//	// Этап 2: Получаем медиафайлы по ID
+	//	var mediaFiles = GetMediaFilesByIdsCompiled((AppDbContext)_context, mediaFileIds);
+
+	//	return mediaFiles
+	//		.AsEnumerable()
+	//		.Select(mf => new
+	//		{
+	//			MediaFile = mf,
+	//			Score = CalculateScore(mf, fullPhrases, rawWords)
+	//		})
+	//		.Where(x => x.Score > 0)
+	//		.OrderByDescending(x => x.Score)
+	//		.ThenBy(x => x.MediaFile.Id)
+	//		.Select(x => x.MediaFile)
+	//		.ToList();
+	//}
+
+	//private static readonly Func<AppDbContext, string[], string[], List<int>> GetMediaIdsCompiled =
+	//	EF.CompileQuery((AppDbContext context, string[] fullPhrases, string[] rawWords) =>
+	//		context.Tags
+	//			.AsNoTracking()
+	//			.Where(t =>
+	//				fullPhrases.Contains(t.Name) ||
+	//				rawWords.Any(rw => t.Name.Contains(rw)))
+	//			.SelectMany(t => t.MediaFiles.Select(mf => mf.Id))
+	//			.Distinct()
+	//			.ToList());
+
+	//private static readonly Func<AppDbContext, IEnumerable<int>, List<MediaFile>> GetMediaFilesByIdsCompiled =
+	//	EF.CompileQuery((AppDbContext context, IEnumerable<int> ids) =>
+	//		context.MediaFiles
+	//			.AsNoTracking()
+	//			.Include(mf => mf.Tags)
+	//			.Where(mf => ids.Contains(mf.Id))
+	//			.ToList());
+
+	//private static int CalculateScore(MediaFile mf, IEnumerable<string> fullPhrases, IEnumerable<string> rawWords)
+	//{
+	//	// Все данные уже в нижнем регистре, поэтому просто Contains
+	//	var exactMatches = mf.Tags.Count(t => fullPhrases.Contains(t.Name)) * 3;
+	//	var wordMatches = mf.Tags.Count(t => rawWords.Any(rw => t.Name.Contains(rw)));
+
+	//	return exactMatches + wordMatches;
+	//}
+
+	// 1ms
+	public async Task<List<MediaFile>> FindByTagsUsingProcedureAsync(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
+	{
+		// procedure call
+		var results = await _context.MediaFileSearchResults
+			.FromSqlInterpolated($"SELECT * FROM find_media_by_tags({fullPhrases.ToArray()}, {rawWords.ToArray()})")
+			.ToListAsync(cancellationToken);
+
+		// data grouping and transformation
+		return results
+		   .GroupBy(r => r.Id)
+		   .Select(g =>
+		   {
+			   var first = g.First();
+			   var tags = g
+				   .Where(x => x.TagId.HasValue)
+				   .Select(x => new Tag { Id = x.TagId.Value, Name = x.TagName })
+				   .ToList();
+
+			   MediaFile mediaFile = first.Discriminator == "VkVoiceMediaFile"
+				   ? new VkVoiceMediaFile
+				   {
+					   VkConversation = first.VkConversation,
+					   VkMessageId = first.VkMessageId.Value
+				   }
+				   : new MediaFile();
+
+			   mediaFile.Id = first.Id;
+			   mediaFile.Description = first.Description;
+			   mediaFile.MediaType = Enum.Parse<MediaType>(first.MediaType, true);
+			   mediaFile.MediaUrl = first.MediaUrl;
+			   mediaFile.Tags = tags;
+
+			   return mediaFile;
+		   })
+		   .ToList();
+	}
 }
