@@ -26,6 +26,10 @@ public class AppDbContext : DbContext, IAppDbContext
 			.UseTptMappingStrategy();
 		modelBuilder.Entity<VkVoiceMediaFile>()
 			.ToTable(ToSnakeCase(nameof(VkVoiceMediaFile)));
+		modelBuilder.Entity<Tag>()
+			.HasIndex(b => b.Name)
+			.HasMethod("gin")
+			.HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" }); 
 
 		AddMediaTypeConstraint(modelBuilder);
 
