@@ -105,17 +105,14 @@ CREATE OR REPLACE FUNCTION public.find_media_by_tags(__fullphrases_0 text[], __r
  RETURNS TABLE(id integer, description text, media_type text, media_url text, vk_conversation text, vk_message_id bigint, discriminator text, tag_id integer, tag_name text)
  LANGUAGE plpgsql
 AS $function$
-DECLARE
-    __fullphrases_lower text[] := array(SELECT lower(f) FROM unnest(__fullphrases_0) f);
 BEGIN
     RETURN QUERY 
     WITH phrase_matches AS (
         SELECT
             mft.media_files_id,
-            COUNT(*) FILTER (WHERE lower(t.name) = ANY(__fullphrases_lower)) * 3 AS exact_score,
+            COUNT(*) FILTER (WHERE t.name = ANY(__fullphrases_0)) * 3 AS exact_score,
             COUNT(*) FILTER (WHERE 
-                lower(t.name) <> ANY(__fullphrases_lower) 
-                AND t.name ILIKE ANY(SELECT '%' || f || '%' FROM unnest(__fullphrases_0) f)
+                t.name ILIKE ANY(SELECT '%' || f || '%' FROM unnest(__fullphrases_0) f)
             ) * 2 AS phrase_score,
             COUNT(*) FILTER (WHERE 
                 t.name ILIKE ANY(SELECT '%' || r || '%' FROM unnest(__rawwords_2) r)

@@ -206,7 +206,7 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 		var mediaFileIds = await _context.Tags
 			.AsNoTracking()
 			.Where(t =>
-				fullPhrases.Contains(t.Name.ToLower()) ||
+				fullPhrases.Contains(t.Name) ||
 				fullPhrases.Any(fp => EF.Functions.ILike(t.Name, "%" + fp + "%")) ||
 				rawWords.Any(rw => EF.Functions.ILike(t.Name, "%" + rw + "%")))
 			.SelectMany(t => t.MediaFiles.Select(mf => mf.Id))
@@ -222,12 +222,12 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 			.Select(mf => new
 			{
 				MediaFile = mf,
-				ExactMatches = mf.Tags.Count(t => fullPhrases.Contains(t.Name.ToLower())) * 3,
+				ExactMatches = mf.Tags.Count(t => fullPhrases.Contains(t.Name)) * 3,
 				PhraseMatches = mf.Tags.Count(t =>
-					!fullPhrases.Contains(t.Name.ToLower()) &&
-					fullPhrases.Any(fp => t.Name.Contains(fp, StringComparison.OrdinalIgnoreCase))) * 2,
+					!fullPhrases.Contains(t.Name) &&
+					fullPhrases.Any(fp => t.Name.Contains(fp))) * 2,
 				WordMatches = mf.Tags.Count(t =>
-					rawWords.Any(rw => t.Name.Contains(rw, StringComparison.OrdinalIgnoreCase)))
+					rawWords.Any(rw => t.Name.Contains(rw)))
 			})
 			.Where(x => x.ExactMatches + x.PhraseMatches + x.WordMatches > 0)
 			.OrderByDescending(x => x.ExactMatches + x.PhraseMatches + x.WordMatches)

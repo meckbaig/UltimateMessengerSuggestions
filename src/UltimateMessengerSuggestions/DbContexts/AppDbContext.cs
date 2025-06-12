@@ -31,17 +31,25 @@ public class AppDbContext : DbContext, IAppDbContext
 			.UseTptMappingStrategy();
 		modelBuilder.Entity<VkVoiceMediaFile>()
 			.ToTable(ToSnakeCase(nameof(VkVoiceMediaFile)));
-		modelBuilder.Entity<Tag>()
-			.HasIndex(b => b.Name)
-			.HasMethod("gin")
-			.HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" }); 
+
 		/// TODO: remove
 		modelBuilder.Entity<MediaFileSearchResult>().HasNoKey();
 
-
+		AddTagIndexes(modelBuilder);
 		AddMediaTypeConstraint(modelBuilder);
 
 		base.OnModelCreating(modelBuilder);
+	}
+
+	private static void AddTagIndexes(ModelBuilder modelBuilder)
+	{
+		modelBuilder.Entity<Tag>()
+			.HasIndex(b => b.Name)
+			.IsUnique();
+		modelBuilder.Entity<Tag>()
+			.HasIndex(b => b.Name)
+			.HasMethod("gin")
+			.HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
 	}
 
 	private static void AddMediaTypeConstraint(ModelBuilder modelBuilder)
