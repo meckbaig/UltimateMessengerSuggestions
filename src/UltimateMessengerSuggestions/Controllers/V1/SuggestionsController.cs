@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net.Mime;
 using UltimateMessengerSuggestions.Extensions;
-using UltimateMessengerSuggestions.Features;
+using UltimateMessengerSuggestions.Features.Suggestions;
 
 namespace UltimateMessengerSuggestions.Controllers.V1;
 
@@ -34,7 +34,7 @@ public class SuggestionsController : ControllerBase
 	/// <param name="query">Search media by search string query parameters.</param>
 	/// <returns>Response results with media files that match the search criteria.</returns>
 	[HttpGet]
-	public async Task<ActionResult<GetMediaResponse>> GetSuggestions(GetMediaQuery query)
+	public async Task<ActionResult<GetSuggestionsResponse>> GetSuggestions(GetSuggestionsQuery query)
 	{
 		var result = await _mediator.Send(query);
 		return result.ToJsonResponse();

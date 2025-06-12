@@ -1,4 +1,4 @@
-namespace UltimateMessengerSuggestions.Models.Dtos.Features;
+namespace UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 
 /// <summary>
 /// Information about a media file.

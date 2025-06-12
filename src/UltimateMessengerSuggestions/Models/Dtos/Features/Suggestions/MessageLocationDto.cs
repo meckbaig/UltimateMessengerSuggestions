@@ -1,4 +1,4 @@
-namespace UltimateMessengerSuggestions.Models.Dtos.Features;
+namespace UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 
 /// <summary>
 /// Represents the location of a message in a specific platform.
