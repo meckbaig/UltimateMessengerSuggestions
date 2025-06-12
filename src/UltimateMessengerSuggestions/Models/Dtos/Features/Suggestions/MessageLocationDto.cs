@@ -1,3 +1,7 @@
+using FluentValidation;
+using UltimateMessengerSuggestions.Extensions;
+using UltimateMessengerSuggestions.Models.Db.Enums;
+
 namespace UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 
 /// <summary>
@@ -31,5 +35,15 @@ public record MessageLocationDto
 		Platform = platform;
 		DialogId = dialogId;
 		MessageId = messageId;
+	}
+	
+	internal class Validator : AbstractValidator<MessageLocationDto>
+	{
+		public Validator()
+		{
+			RuleFor(x => x.Platform).MustBeValidEnum<MessageLocationDto, Platform>();
+			RuleFor(x => x.DialogId).NotEmpty();
+			RuleFor(x => x.MessageId).NotEmpty();
+		}
 	}
 }

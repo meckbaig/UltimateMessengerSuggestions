@@ -1,3 +1,7 @@
+using FluentValidation;
+using UltimateMessengerSuggestions.Extensions;
+using UltimateMessengerSuggestions.Models.Db.Enums;
+
 namespace UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 
 /// <summary>
@@ -45,5 +49,27 @@ public record MediaFileDto
         MediaType = mediaType;
         Tags = tags;
         MessageLocation = messageLocation;
-    }
+	}
+
+	internal class Validator : AbstractValidator<MediaFileDto>
+	{
+		public Validator()
+		{
+			RuleFor(x => x.MediaType).MustBeValidEnum<MediaFileDto, MediaType>();
+			RuleFor(x => x.MediaUrl).NotEmpty();
+			RuleFor(x => x.Description).NotEmpty();
+			RuleFor(x => x.Tags)
+				.NotNull()
+				.NotEmpty()
+				.Must(tags => tags.All(tag => !string.IsNullOrWhiteSpace(tag)))
+				.WithMessage("Tags cannot be empty or whitespace.");
+			RuleFor(x => x.MessageLocation)
+				.NotNull()
+				.WithMessage("MessageLocation is required when MediaType is 'voice'.")
+				.When(x => Enum.TryParse<MediaType>(x.MediaType, true, out var type) && type == Db.Enums.MediaType.Voice);
+			RuleFor(x => x.MessageLocation)
+				.SetValidator(new MessageLocationDto.Validator())
+				.When(x => x.MessageLocation != null);
+		}
+	}
 }
