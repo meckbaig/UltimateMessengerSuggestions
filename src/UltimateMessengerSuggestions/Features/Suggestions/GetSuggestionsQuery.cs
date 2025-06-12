@@ -6,14 +6,14 @@ using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
-using UltimateMessengerSuggestions.Models.Dtos.Features;
+using UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 
-namespace UltimateMessengerSuggestions.Features;
+namespace UltimateMessengerSuggestions.Features.Suggestions;
 
 /// <summary>
 /// Search media by search string query parameters.
 /// </summary>
-public record GetMediaQuery : IRequest<GetMediaResponse>
+public record GetSuggestionsQuery : IRequest<GetSuggestionsResponse>
 {
 	/// <summary>
 	/// Search string to find media files by tags.
@@ -58,7 +58,7 @@ public record GetMediaQuery : IRequest<GetMediaResponse>
 /// <summary>
 /// Response results with media files that match the search criteria.
 /// </summary>
-public class GetMediaResponse
+public class GetSuggestionsResponse
 {
 	/// <summary>
 	/// List of media files that match the search criteria.
@@ -66,9 +66,9 @@ public class GetMediaResponse
 	public required List<MediaFileDto> MediaFiles { get; set; }
 }
 
-internal class GetMediaValidator : AbstractValidator<GetMediaQuery>
+internal class GetSuggestionsValidator : AbstractValidator<GetSuggestionsQuery>
 {
-	public GetMediaValidator()
+	public GetSuggestionsValidator()
 	{
 		RuleFor(x => x.SearchString)
 			.NotEmpty()
@@ -79,20 +79,20 @@ internal class GetMediaValidator : AbstractValidator<GetMediaQuery>
 	}
 }
 
-internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse>
+internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetSuggestionsResponse>
 {
 	private readonly IAppDbContext _context;
 
-	public GetMediaHandler(IAppDbContext context)
+	public GetSuggestionsHandler(IAppDbContext context)
 	{
 		_context = context;
 	}
 
-	public async Task<GetMediaResponse> Handle(GetMediaQuery request, CancellationToken cancellationToken)
+	public async Task<GetSuggestionsResponse> Handle(GetSuggestionsQuery request, CancellationToken cancellationToken)
 	{
 		var media = await SearchMediaByTagsAsync(request.SearchString, request.QueryExecutionType, cancellationToken);
 
-		return new GetMediaResponse
+		return new GetSuggestionsResponse
 		{
 			MediaFiles = media.ToDto().ToList()
 		};
@@ -162,7 +162,7 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 			.Select(mf => new
 			{
 				MediaFile = mf,
-				Tags = mf.Tags,
+				mf.Tags,
 				ExactMatches = mf.Tags.Count(t => lowerFullPhrases.Contains(t.Name.ToLower())) * 3,
 				PhraseMatches = mf.Tags.Count(t =>
 					!lowerFullPhrases.Contains(t.Name.ToLower()) &&
@@ -171,7 +171,7 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 					rawWords.Any(rw => EF.Functions.ILike(t.Name, "%" +rw + "%")))
 	
 			})
-			.Where(x => (x.ExactMatches + x.PhraseMatches + x.WordMatches) > 0)
+			.Where(x => x.ExactMatches + x.PhraseMatches + x.WordMatches > 0)
 			.Select(x => new
 			{
 				x.MediaFile,
@@ -229,7 +229,7 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 				WordMatches = mf.Tags.Count(t =>
 					rawWords.Any(rw => t.Name.Contains(rw, StringComparison.OrdinalIgnoreCase)))
 			})
-			.Where(x => (x.ExactMatches + x.PhraseMatches + x.WordMatches) > 0)
+			.Where(x => x.ExactMatches + x.PhraseMatches + x.WordMatches > 0)
 			.OrderByDescending(x => x.ExactMatches + x.PhraseMatches + x.WordMatches)
 			.ThenBy(x => x.MediaFile.Id)
 			.Select(x => x.MediaFile)
@@ -241,10 +241,10 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 	//private List<MediaFile> FindByTagsUsingEfCompiledAsync(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
 	//{
 	//	// Этап 1: Получаем ID через компилированный запрос
-	//	var mediaFileIds = GetMediaIdsCompiled((AppDbContext)_context, fullPhrases.ToArray(), rawWords.ToArray());
+	//	var mediaFileIds = GetSuggestionsIdsCompiled((AppDbContext)_context, fullPhrases.ToArray(), rawWords.ToArray());
 
 	//	// Этап 2: Получаем медиафайлы по ID
-	//	var mediaFiles = GetMediaFilesByIdsCompiled((AppDbContext)_context, mediaFileIds);
+	//	var mediaFiles = GetSuggestionsFilesByIdsCompiled((AppDbContext)_context, mediaFileIds);
 
 	//	return mediaFiles
 	//		.AsEnumerable()
@@ -260,7 +260,7 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 	//		.ToList();
 	//}
 
-	//private static readonly Func<AppDbContext, string[], string[], List<int>> GetMediaIdsCompiled =
+	//private static readonly Func<AppDbContext, string[], string[], List<int>> GetSuggestionsIdsCompiled =
 	//	EF.CompileQuery((AppDbContext context, string[] fullPhrases, string[] rawWords) =>
 	//		context.Tags
 	//			.AsNoTracking()
@@ -271,7 +271,7 @@ internal class GetMediaHandler : IRequestHandler<GetMediaQuery, GetMediaResponse
 	//			.Distinct()
 	//			.ToList());
 
-	//private static readonly Func<AppDbContext, IEnumerable<int>, List<MediaFile>> GetMediaFilesByIdsCompiled =
+	//private static readonly Func<AppDbContext, IEnumerable<int>, List<MediaFile>> GetSuggestionsFilesByIdsCompiled =
 	//	EF.CompileQuery((AppDbContext context, IEnumerable<int> ids) =>
 	//		context.MediaFiles
 	//			.AsNoTracking()
