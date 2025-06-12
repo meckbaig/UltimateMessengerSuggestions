@@ -12,13 +12,13 @@ using System.Globalization;
 using System.Reflection;
 using UltimateMessengerSuggestions.Common.Behaviours;
 using UltimateMessengerSuggestions.Common.Conventions;
+using UltimateMessengerSuggestions.Common.Filters;
 using UltimateMessengerSuggestions.Common.Options;
 using UltimateMessengerSuggestions.Common.Options.Configurators.Swagger;
 using UltimateMessengerSuggestions.Common.Options.Loggers;
 using UltimateMessengerSuggestions.Common.Options.Validators;
 using UltimateMessengerSuggestions.Common.Options.Validators.Loggers;
 using UltimateMessengerSuggestions.DbContexts;
-using UltimateMessengerSuggestions.Infrastructure;
 using JsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 
 
@@ -97,13 +97,14 @@ internal static class ServiceCollectionExtensions
 			.AddControllers(options =>
 			{
 				options.Conventions.Add(new CamelCaseControllerNameConvention());
+				options.Conventions.Add(new CamelCaseQueryParameterConvention());
 				options.Filters.Add<FluentValidationFilter>();
 			})
 			.AddJsonOptions(options =>
 			{
 				options.JsonSerializerOptions.PropertyNamingPolicy = JsonResponseExtensions.SerializerOptions.PropertyNamingPolicy;
 				options.JsonSerializerOptions.DictionaryKeyPolicy = JsonResponseExtensions.SerializerOptions.DictionaryKeyPolicy;
-				options.JsonSerializerOptions.PropertyNameCaseInsensitive = JsonResponseExtensions.SerializerOptions.PropertyNameCaseInsensitive; ;
+				options.JsonSerializerOptions.PropertyNameCaseInsensitive = JsonResponseExtensions.SerializerOptions.PropertyNameCaseInsensitive;
 			});
 		services.Configure<JsonOptions>(options =>
 		{

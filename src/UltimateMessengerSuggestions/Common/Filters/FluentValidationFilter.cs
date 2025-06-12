@@ -2,8 +2,9 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using UltimateMessengerSuggestions.Common.ExceptionHandlers;
 
-namespace UltimateMessengerSuggestions.Infrastructure;
+namespace UltimateMessengerSuggestions.Common.Filters;
 
 internal class FluentValidationFilter : IAsyncActionFilter
 {
