@@ -54,12 +54,15 @@ public class AppDbContext : DbContext, IAppDbContext
 
 	private static void AddMediaTypeConstraint(ModelBuilder modelBuilder)
 	{
-		var allowedValues = Enum.GetNames(typeof(MediaType)).Select(e => $"'{e.ToLower()}'");
+		var allowedValues = Enum.GetNames(typeof(MediaType)).Select(e => $"'{ToSnakeCase(e)}'");
 		var checkConstraint = $"\"{ToSnakeCase(nameof(MediaFile.MediaType))}\" IN ({string.Join(", ", allowedValues)})";
 
 		modelBuilder.Entity<MediaFile>()
 			.Property(m => m.MediaType)
-			.HasConversion<string>();
+			.HasConversion(
+				v => v.ToString().ToLower(),
+				v => Enum.Parse<MediaType>(v, true)
+			);
 
 		modelBuilder.Entity<MediaFile>()
 			.ToTable(t => t.HasCheckConstraint("CK_Message_Type", checkConstraint));
