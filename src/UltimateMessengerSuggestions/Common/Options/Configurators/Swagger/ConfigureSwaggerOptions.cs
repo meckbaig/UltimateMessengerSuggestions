@@ -36,6 +36,37 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : 
 				}
 			});
 			options.ParameterFilter<CamelCaseQueryParameterFilter>();
+
+			var resolved = new Dictionary<Type, string>();
+			var used = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+
+			options.CustomSchemaIds(type =>
+			{
+				if (resolved.TryGetValue(type, out var name))
+					return name;
+
+				string shortName = type.Name;
+
+				if (!used.TryGetValue(shortName, out var conflict))
+				{
+					used[shortName] = type;
+					return resolved[type] = shortName;
+				}
+
+				string Resolve(Type t) => t.DeclaringType != null ? $"{t.DeclaringType.Name}.{shortName}" : shortName;
+
+				string prevName = Resolve(conflict);
+				string currName = Resolve(type);
+
+				used.Remove(shortName);
+				used[prevName] = conflict;
+				used[currName] = type;
+
+				resolved[conflict] = prevName;
+				resolved[type] = currName;
+
+				return currName;
+			});
 		}
 	}
 }
