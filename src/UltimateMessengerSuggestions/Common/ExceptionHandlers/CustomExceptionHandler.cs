@@ -2,7 +2,9 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using UltimateMessengerSuggestions.Common.Exceptions;
+using UltimateMessengerSuggestions.Extensions;
 
 namespace UltimateMessengerSuggestions.Common.ExceptionHandlers;
 
@@ -93,7 +95,7 @@ internal class CustomExceptionHandler : IExceptionHandler
 		var errors = failures
 			.GroupBy(e => e.PropertyName)
 			.ToDictionary(
-				g => g.Key,
+				g => string.Join('.', g.Key.Split('.').Select(JsonResponseExtensions.SerializerOptions.PropertyNamingPolicy!.ConvertName)),
 				g => g.Select(e => e.ErrorMessage).ToArray());
 
 		return new ValidationProblemDetails
