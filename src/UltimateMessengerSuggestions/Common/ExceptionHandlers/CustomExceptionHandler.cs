@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using UltimateMessengerSuggestions.Common.Exceptions;
 
-namespace UltimateMessengerSuggestions.Infrastructure;
+namespace UltimateMessengerSuggestions.Common.ExceptionHandlers;
 
 internal class CustomExceptionHandler : IExceptionHandler
 {

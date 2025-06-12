@@ -2,8 +2,8 @@ using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;
-using UltimateMessengerSuggestions.Infrastructure;
-using UltimateMessengerSuggestions.Infrastructure.HealthChecks;
+using UltimateMessengerSuggestions.Common.ExceptionHandlers;
+using UltimateMessengerSuggestions.Common.HealthChecks;
 
 namespace UltimateMessengerSuggestions.Extensions;
 

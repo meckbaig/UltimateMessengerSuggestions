@@ -1,8 +1,9 @@
-using System.Reflection;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
+using UltimateMessengerSuggestions.Common.Filters;
 
 namespace UltimateMessengerSuggestions.Common.Options.Configurators.Swagger;
 
@@ -34,6 +35,7 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : 
 					Name = "meckbaig"
 				}
 			});
+			options.ParameterFilter<CamelCaseQueryParameterFilter>();
 		}
 	}
 }

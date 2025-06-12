@@ -1,4 +1,4 @@
-namespace UltimateMessengerSuggestions.Infrastructure.HealthChecks;
+namespace UltimateMessengerSuggestions.Common.HealthChecks;
 
 /// <summary>
 /// Represents the response of the application's health check.
