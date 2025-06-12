@@ -43,5 +43,33 @@ public class MediaController : ControllerBase
 		return result.ToJsonResponse();
 	}
 
+	/// <summary>
+	/// Edits an existing media item based on the provided command.
+	/// </summary>
+	/// <remarks>This method processes the edit operation by sending the provided command to the mediator. The
+	/// response is returned in JSON format.</remarks>
+	/// <param name="command">The command containing the details of the media item to be edited, including its identifier and updated properties.</param>
+	/// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="EditMediaCommand"/> object.</returns>
+	[HttpPost("{id}")]
+	public async Task<IActionResult> EditMedia(EditMediaCommand command)
+	{
+		var result = await _mediator.Send(command);
+		return Ok();
+	}
 
+	/// <summary>
+	/// Deletes a media item based on the specified command.
+	/// </summary>
+	/// <remarks>This method uses the mediator pattern to process the delete operation. Ensure that the <paramref
+	/// name="command"/> contains valid data to avoid errors.</remarks>
+	/// <param name="command">The command containing the details of the media item to delete.  This must include the necessary identifiers and
+	/// any required parameters.</param>
+	/// <returns>An <see cref="ActionResult{T}"/> containing a <see cref="DeleteMediaResponse"/> that indicates the result of the
+	/// delete operation.</returns>
+	[HttpDelete("{id}")]
+	public async Task<IActionResult> DeleteMedia(DeleteMediaCommand command)
+	{
+		await _mediator.Send(command);
+		return Ok();
+	}
 }
