@@ -98,7 +98,6 @@ internal static class ServiceCollectionExtensions
 			{
 				options.Conventions.Add(new CamelCaseControllerNameConvention());
 				options.Conventions.Add(new CamelCaseQueryParameterConvention());
-				options.Filters.Add<FluentValidationFilter>();
 			})
 			.AddJsonOptions(options =>
 			{
