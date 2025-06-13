@@ -1,3 +1,7 @@
+using AutoMapper;
+using Meckbaig.Cqrs.Dto.Abstractions;
+using Meckbaig.Cqrs.ListFliters.Attrubutes;
+using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 
 namespace UltimateMessengerSuggestions.Models.Dtos.Features.Media;
@@ -5,11 +9,12 @@ namespace UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 /// <summary>
 /// Represents a data transfer object for editing a media file.
 /// </summary>
-public record EditMediaFileDto : MediaFileDto
+public record EditMediaFileDto : MediaFileDto, IEditDto
 {
 	/// <summary>
 	/// File identifier.
 	/// </summary>
+	[Filterable(CompareMethod.Equals)]
 	public int Id { get; init; }
 
 	/// <summary>
@@ -25,5 +30,21 @@ public record EditMediaFileDto : MediaFileDto
 		: base(description, mediaUrl, mediaType, tags, messageLocation)
 	{
 		Id = id;
+	}
+
+	/// <inheritdoc />
+	public static Type GetValidatorType() => typeof(Validator);
+
+	/// <remarks>
+	/// For filters only
+	/// </remarks>
+	private class Mapping : Profile
+	{
+		public Mapping()
+		{
+			CreateMap<EditMediaFileDto, MediaFile>()
+				.ForMember(d => d.Id, o => o.MapFrom(s => s.Id))
+				.ForMember(d => d.Description, o => o.MapFrom(s => s.Description));
+		}
 	}
 }

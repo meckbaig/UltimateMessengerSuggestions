@@ -16,6 +16,7 @@ try
 	builder.Services.AddDatabaseConnection();
 	builder.Services.AddControllersWithJsonNamingPolicy();
 	builder.Services.AddMediatRFromAssembly();
+	builder.Services.AddAutoMapperFromAssembly();
 	builder.Services.AddValidatorsFromAssembly();
 	builder.Services.AddSwaggerSupport();
 	builder.Services.AddAppHealthChecks();

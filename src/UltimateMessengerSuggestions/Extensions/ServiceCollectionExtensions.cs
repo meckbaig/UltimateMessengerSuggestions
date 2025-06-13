@@ -12,7 +12,6 @@ using System.Globalization;
 using System.Reflection;
 using UltimateMessengerSuggestions.Common.Behaviours;
 using UltimateMessengerSuggestions.Common.Conventions;
-using UltimateMessengerSuggestions.Common.Filters;
 using UltimateMessengerSuggestions.Common.Options;
 using UltimateMessengerSuggestions.Common.Options.Configurators.Swagger;
 using UltimateMessengerSuggestions.Common.Options.Loggers;
@@ -121,6 +120,11 @@ internal static class ServiceCollectionExtensions
 			c.AddBehavior(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
 			c.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 		});
+	}
+
+	internal static IServiceCollection AddAutoMapperFromAssembly(this IServiceCollection services)
+	{
+		return services.AddAutoMapper(Assembly.GetExecutingAssembly());
 	}
 
 	internal static IServiceCollection AddValidatorsFromAssembly(this IServiceCollection services)

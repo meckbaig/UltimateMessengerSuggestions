@@ -72,4 +72,11 @@ public class MediaController : ControllerBase
 		await _mediator.Send(command);
 		return Ok();
 	}
+
+	[HttpGet]
+	public async Task<ActionResult<GetMediaResponse>> GetList(GetMediaQuery query)
+	{
+		var result = await _mediator.Send(query);
+		return result.ToJsonResponse();
+	}
 }
