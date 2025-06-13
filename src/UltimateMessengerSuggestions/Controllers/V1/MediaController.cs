@@ -73,6 +73,14 @@ public class MediaController : ControllerBase
 		return Ok();
 	}
 
+	/// <summary>
+	/// Retrieves a list of media items based on the specified query parameters.
+	/// </summary>
+	/// <remarks>This method processes the provided query using the mediator pattern to retrieve the requested media
+	/// items. The response is returned in JSON format.</remarks>
+	/// <param name="query">The query parameters used to filter and retrieve the media items. Cannot be null.</param>
+	/// <returns>An <see cref="ActionResult{T}"/> containing a <see cref="GetMediaResponse"/> object with the list of media items.
+	/// If no items match the query, the response will indicate an empty result.</returns>
 	[HttpGet]
 	public async Task<ActionResult<GetMediaResponse>> GetList(GetMediaQuery query)
 	{
