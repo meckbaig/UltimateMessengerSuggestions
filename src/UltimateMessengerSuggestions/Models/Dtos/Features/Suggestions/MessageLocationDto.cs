@@ -36,7 +36,7 @@ public record MessageLocationDto
 		DialogId = dialogId;
 		MessageId = messageId;
 	}
-	
+
 	internal class Validator : AbstractValidator<MessageLocationDto>
 	{
 		public Validator()

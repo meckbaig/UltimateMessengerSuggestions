@@ -63,7 +63,7 @@ public class GetSuggestionsResponse
 	/// <summary>
 	/// List of media files that match the search criteria.
 	/// </summary>
-	public required List<MediaFileDto> MediaFiles { get; set; }
+	public required List<MediaFileDto> Items { get; set; }
 }
 
 internal class GetSuggestionsValidator : AbstractValidator<GetSuggestionsQuery>
@@ -94,7 +94,7 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 
 		return new GetSuggestionsResponse
 		{
-			MediaFiles = media.ToDto().ToList()
+			Items = media.ToDtos().ToList()
 		};
 	}
 

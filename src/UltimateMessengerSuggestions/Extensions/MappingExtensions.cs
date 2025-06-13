@@ -61,9 +61,14 @@ internal static class MappingExtensions
 			messageLocation: source.MessageLocation);
 	}
 
-	public static IEnumerable<MediaFileDto> ToDto(this IEnumerable<MediaFile> source)
+	public static IEnumerable<MediaFileDto> ToDtos(this IEnumerable<MediaFile> source)
 	{
 		return source.Select(ToDto);
+	}
+
+	public static IEnumerable<EditMediaFileDto> ToEditDtos(this IEnumerable<MediaFile> source)
+	{
+		return source.Select(ToEditDto);
 	}
 
 	public static async Task<MediaFile> ToDbModelAsync(

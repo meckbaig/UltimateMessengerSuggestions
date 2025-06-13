@@ -1,9 +1,11 @@
+using Meckbaig.Cqrs.EntityFrameworkCore.Abstractons.Entities;
+
 namespace UltimateMessengerSuggestions.Models.Db;
 
 /// <summary>
 /// Tag used for searching media files.
 /// </summary>
-public class Tag
+public class Tag : IEntityWithId
 {
 	/// <summary>
 	/// Tag identifier.

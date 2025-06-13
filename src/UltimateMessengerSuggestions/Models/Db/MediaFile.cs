@@ -1,3 +1,4 @@
+using Meckbaig.Cqrs.EntityFrameworkCore.Abstractons.Entities;
 using UltimateMessengerSuggestions.Models.Db.Enums;
 
 namespace UltimateMessengerSuggestions.Models.Db;
@@ -5,7 +6,7 @@ namespace UltimateMessengerSuggestions.Models.Db;
 /// <summary>
 /// A media file that can be associated with tags.
 /// </summary>
-public class MediaFile
+public class MediaFile : IEntityWithId
 {
 	/// <summary>
 	/// File identifier.

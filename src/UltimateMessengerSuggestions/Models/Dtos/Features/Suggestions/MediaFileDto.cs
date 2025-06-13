@@ -1,5 +1,8 @@
 using FluentValidation;
+using Meckbaig.Cqrs.Dto.Abstractions;
+using Meckbaig.Cqrs.ListFliters.Attrubutes;
 using UltimateMessengerSuggestions.Extensions;
+using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
 
 namespace UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
@@ -7,7 +10,7 @@ namespace UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 /// <summary>
 /// Information about a media file.
 /// </summary>
-public record MediaFileDto
+public record MediaFileDto : IBaseDto
 {
     /// <summary>
     /// Media file type.
@@ -19,20 +22,22 @@ public record MediaFileDto
     /// </summary>
     public string MediaUrl { get; init; } = null!;
 
-    /// <summary>
-    /// Description of the media file content.
-    /// </summary>
-    public string Description { get; init; } = null!;
+	/// <summary>
+	/// Description of the media file content.
+	/// </summary>
+	[Filterable(CompareMethod.OriginalContainsInput)]
+	public string Description { get; init; } = null!;
 
 	/// <summary>
 	/// Location of the message associated with the media file, if applicable.
 	/// </summary>
 	public MessageLocationDto? MessageLocation { get; init; }
 
-    /// <summary>
-    /// List of tags associated with the file.
-    /// </summary>
-    public List<string> Tags { get; init; } = [];
+	/// <summary>
+	/// List of tags associated with the file.
+	/// </summary>
+	[Filterable(CompareMethod.Custom)]
+	public List<string> Tags { get; init; } = [];
 
 	/// <summary>
 	/// Constructor for creating a media file DTO with required fields and a list of tags.
@@ -72,4 +77,7 @@ public record MediaFileDto
 				.When(x => x.MessageLocation != null);
 		}
 	}
+
+	/// <inheritdoc />
+	public static Type GetOriginType() => typeof(MediaFile);
 }
