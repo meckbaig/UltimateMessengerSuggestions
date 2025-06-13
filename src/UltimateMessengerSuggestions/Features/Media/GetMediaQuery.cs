@@ -76,9 +76,9 @@ internal class GetMediaQueryHandler : IRequestHandler<GetMediaQuery, GetMediaRes
 		};
 	}
 
-	private Expression<Func<MediaFile, bool>> GetTagsFilterExpression(FilterExpression filterEx)
+	private Expression<Func<MediaFile, bool>> GetTagsFilterExpression(FilterExpression? filterEx)
 	{
-		if (string.IsNullOrWhiteSpace(filterEx.Value))
+		if (filterEx is null || string.IsNullOrWhiteSpace(filterEx.Value))
 			return _ => true;
 
 		var loweredValue = new string(

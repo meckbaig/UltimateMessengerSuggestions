@@ -31,13 +31,11 @@ public abstract record BaseListQuery<TResponse> : BaseRequest<TResponse>
 	private readonly List<Expression> _filterExpressions = [];
 	private readonly List<Expression> _orderExpressions = [];
 
-	private FilterExpression PopPendingFilterExpression(string key)
+	private FilterExpression? PopPendingFilterExpression(string key)
 	{
 		_pendingFilterExpressions.TryGetValue(key, out var filterExpression);
 		if (filterExpression is null)
-		{
-			throw new KeyNotFoundException($"Filter expression with key '{key}' not found.");
-		}
+			return null;
 		_pendingFilterExpressions.Remove(key);
 		return filterExpression;
 	}
@@ -51,7 +49,7 @@ public abstract record BaseListQuery<TResponse> : BaseRequest<TResponse>
 	public void AddPendingFilterExpression(FilterExpression filterExpression)
 		=> _pendingFilterExpressions!.Add(filterExpression.Key, filterExpression);
 
-	public void AddFilterExpression(string key, Func<FilterExpression, Expression> getTagsFilterExpression) 
+	public void AddFilterExpression(string key, Func<FilterExpression?, Expression> getTagsFilterExpression) 
 		=> _filterExpressions.Add(getTagsFilterExpression(PopPendingFilterExpression(key)));
 
 	public void AddFilterExpression(Expression expression)
