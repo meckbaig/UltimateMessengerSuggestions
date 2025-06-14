@@ -21,11 +21,13 @@ try
 	builder.Services.AddSwaggerSupport();
 	builder.Services.AddAppHealthChecks();
 	builder.Services.AddOpenTelemetryMetrics();
+	builder.Services.AddCorsConfiguration();
 
 	var app = builder.Build();
 
 	app.UseSwaggerDocumentation();
 	app.UseCustomExceptionHandler();
+	app.UseCors("AllowAllOrigins");
 	app.MapControllers();
 	app.MapHealthCheckEndpoint();
 	app.MapOpenTelemetryMetricsEndpoint();
