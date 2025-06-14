@@ -2,9 +2,13 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using System.Web;
 using UltimateMessengerSuggestions.Common.Exceptions;
+using UltimateMessengerSuggestions.Common.Options;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Models.Db;
+using UltimateMessengerSuggestions.Services;
 
 namespace UltimateMessengerSuggestions.Features.Media;
 
@@ -30,10 +34,14 @@ public class DeleteMediaResponse
 internal class DeleteMediaHandler : IRequestHandler<DeleteMediaCommand, DeleteMediaResponse>
 {
 	private readonly IAppDbContext _context;
+	private readonly IMediaUploader _mediaUploader;
+	private readonly WebDavOptions _webDavOptions;
 
-	public DeleteMediaHandler(IAppDbContext context)
+	public DeleteMediaHandler(IAppDbContext context, IMediaUploader mediaUploader, IOptions<WebDavOptions> webDavOptions)
 	{
 		_context = context;
+		_mediaUploader = mediaUploader;
+		_webDavOptions = webDavOptions.Value;
 	}
 
 	public async Task<DeleteMediaResponse> Handle(DeleteMediaCommand request, CancellationToken cancellationToken)
@@ -57,8 +65,23 @@ internal class DeleteMediaHandler : IRequestHandler<DeleteMediaCommand, DeleteMe
 		if (tagsToRemove.Count > 0)
 			_context.Tags.RemoveRange(tagsToRemove);
 		_context.MediaFiles.Remove(mediaFile);
+
+		if (mediaFile.MediaUrl.Contains(_webDavOptions.PublicPreviewBase) 
+			&& TryExtractFileName(mediaFile.MediaUrl, out string fileName))
+		{
+			await _mediaUploader.DeleteAsync(fileName, cancellationToken);
+		}
 		await _context.SaveChangesAsync(cancellationToken);
 
 		return new DeleteMediaResponse();
+	}
+
+	public static bool TryExtractFileName(string previewUrl, out string fileName)
+	{
+		var uri = new Uri(previewUrl);
+		var query = HttpUtility.ParseQueryString(uri.Query);
+		var fileParam = query.Get("file");
+		fileName = Path.GetFileName(fileParam);
+		return fileName != null;
 	}
 }

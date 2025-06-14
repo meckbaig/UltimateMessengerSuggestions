@@ -87,4 +87,18 @@ public class MediaController : ControllerBase
 		var result = await _mediator.Send(query);
 		return result.ToJsonResponse();
 	}
+
+	/// <summary>
+	/// Edits an existing media item based on the provided command.
+	/// </summary>
+	/// <remarks>This method processes the edit operation by sending the provided command to the mediator. The
+	/// response is returned in JSON format.</remarks>
+	/// <param name="command">The command containing the details of the media item to be edited, including its identifier and updated properties.</param>
+	/// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="EditMediaCommand"/> object.</returns>
+	[HttpPost("upload")]
+	public async Task<ActionResult<UploadMediaResponse>> UploadMedia(UploadMediaCommand command)
+	{
+		var result = await _mediator.Send(command);
+		return result.ToJsonResponse();
+	}
 }
