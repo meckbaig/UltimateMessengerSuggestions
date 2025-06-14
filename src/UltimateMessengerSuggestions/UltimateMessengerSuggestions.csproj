@@ -50,10 +50,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Services\" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <ProjectReference Include="..\Meckbaig.Cqrs.ListFliters\Meckbaig.Cqrs.ListFliters.csproj" />
 	</ItemGroup>
 	
