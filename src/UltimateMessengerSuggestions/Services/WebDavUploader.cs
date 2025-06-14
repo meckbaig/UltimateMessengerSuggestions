@@ -1,12 +1,15 @@
 using Microsoft.Extensions.Options;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using System.Net;
 using UltimateMessengerSuggestions.Common.Options;
+using UltimateMessengerSuggestions.Models.Db.Enums;
 
 namespace UltimateMessengerSuggestions.Services;
 
 internal class WebDavUploader : IMediaUploader
 {
-	private readonly ILogger<WebDavUploader> _logger;	
+	private readonly ILogger<WebDavUploader> _logger;
 	private readonly WebDavOptions _settings;
 
 	public WebDavUploader(IOptions<WebDavOptions> options, ILogger<WebDavUploader> logger)
@@ -15,19 +18,19 @@ internal class WebDavUploader : IMediaUploader
 		_logger = logger;
 	}
 
-	public async Task<string> UploadAsync(IFormFile file, CancellationToken cancellationToken = default)
+	public async Task<string> UploadAsync(IFormFile file, MediaType mediaType, CancellationToken cancellationToken = default)
 	{
-		var ext = Path.GetExtension(file.FileName);
 		var hash = Guid.NewGuid().ToString("N")[..8];
-		var remoteFileName = $"{hash}{ext}";
-		var uploadUrl = new Uri($"{_settings.Endpoint}{remoteFileName}");
 
 		using var client = new HttpClient(new HttpClientHandler
 		{
 			Credentials = new NetworkCredential(_settings.Username, _settings.Password)
 		});
 
-		Stream contentStream = ConvertIfNeededAsStream(file);
+		(Stream contentStream, string extension) = await ConvertIfNeededAsStreamAsync(file, mediaType);
+
+		var remoteFileName = $"{hash}{extension}";
+		var uploadUrl = new Uri($"{_settings.Endpoint}{remoteFileName}");
 
 		using var content = new StreamContent(contentStream);
 		var response = await client.PutAsync(uploadUrl, content, cancellationToken);
@@ -44,10 +47,42 @@ internal class WebDavUploader : IMediaUploader
 		return $"{_settings.PublicPreviewBase}{Uri.EscapeDataString(remoteFileName)}";
 	}
 
-	private Stream ConvertIfNeededAsStream(IFormFile file)
+	private async Task<(Stream Stream, string Extension)> ConvertIfNeededAsStreamAsync(IFormFile file, MediaType mediaType)
 	{
-		/// TODO:
-		return file.OpenReadStream();
+		switch (mediaType)
+		{
+			case MediaType.Picture:
+				return await ConvertPictureIfNeededAsStreamAsync(file);
+			default:
+				throw new NotSupportedException($"Media type '{mediaType}' is not supported for upload.");
+		}
+	}
+
+	private async Task<(Stream Stream, string Extension)> ConvertPictureIfNeededAsStreamAsync(IFormFile file)
+	{
+		try
+		{
+			string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+			if (ext is ".jpg" or ".jpeg" or ".png" or ".webp")
+				return (file.OpenReadStream(), ext);
+
+			using var image = await Image.LoadAsync(file.OpenReadStream());
+			var memoryStream = new MemoryStream();
+			await image.SaveAsJpegAsync(memoryStream, new JpegEncoder
+			{
+				Quality = 90
+			});
+			memoryStream.Seek(0, SeekOrigin.Begin);
+			return (memoryStream, ".jpg");
+		}
+		catch (SixLabors.ImageSharp.UnknownImageFormatException)
+		{
+			throw new InvalidOperationException("Image format is not supported.");
+		}
+		catch (SixLabors.ImageSharp.ImageFormatException)
+		{
+			throw new InvalidOperationException("File is not a valid image.");
+		}
 	}
 
 	public async Task DeleteAsync(string fileName, CancellationToken cancellationToken = default)

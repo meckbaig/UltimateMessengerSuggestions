@@ -1,3 +1,5 @@
+using UltimateMessengerSuggestions.Models.Db.Enums;
+
 namespace UltimateMessengerSuggestions.Services;
 
 /// <summary>
@@ -11,9 +13,10 @@ public interface IMediaUploader
 	/// <remarks>The method uploads the provided file to a storage service and returns the URL where the file can be
 	/// accessed. Ensure that the file meets any size or format requirements imposed by the storage service.</remarks>
 	/// <param name="file">The file to be uploaded.</param>
+	/// <param name="mediaType">Enumeration representing type of media file.</param>
 	/// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
 	/// <returns>URL of the uploaded file.</returns>
-	Task<string> UploadAsync(IFormFile file, CancellationToken cancellationToken = default);
+	Task<string> UploadAsync(IFormFile file, MediaType mediaType, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Deletes the specified file asynchronously.
