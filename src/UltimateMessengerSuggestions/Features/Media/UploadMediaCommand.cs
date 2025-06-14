@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UltimateMessengerSuggestions.Extensions;
+using UltimateMessengerSuggestions.Models.Db.Enums;
 using UltimateMessengerSuggestions.Services;
 
 namespace UltimateMessengerSuggestions.Features.Media;
@@ -15,6 +17,20 @@ public record UploadMediaCommand : IRequest<UploadMediaResponse>
 	/// </summary>
 	[FromForm]
 	public IFormFile File { get; init; } = null!;
+
+	/// <summary>
+	/// The type of media being uploaded.
+	/// </summary>
+	[FromForm]
+	public string MediaType { get; init; } = null!;
+}
+
+internal class UploadMediaValidator : AbstractValidator<UploadMediaCommand>
+{
+	public UploadMediaValidator()
+	{
+		RuleFor(x => x.MediaType).MustBeValidEnum<UploadMediaCommand, MediaType>();
+	}
 }
 
 /// <summary>
@@ -43,9 +59,10 @@ internal class UploadMediaHandler : IRequestHandler<UploadMediaCommand, UploadMe
 		{
 			throw new ValidationException([new(nameof(request.File), "File cannot be null or empty.")]);
 		}
+		Enum.TryParse<MediaType>(request.MediaType, true, out var mediaType);
 		return new UploadMediaResponse
 		{
-			PreviewUrl = await _mediaUploader.UploadAsync(request.File, cancellationToken)
+			PreviewUrl = await _mediaUploader.UploadAsync(request.File, mediaType, cancellationToken)
 		};
 	}
 }
