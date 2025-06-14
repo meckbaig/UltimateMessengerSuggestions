@@ -28,6 +28,9 @@ internal static class ServiceCollectionExtensions
 	internal static IServiceCollection AddAppOptions(this IServiceCollection services)
 	{
 		services
+			.AddOptionsWithValidateOnStart<WebDavOptions>()
+			.BindConfiguration(WebDavOptions.ConfigurationSectionName);
+		services
 			.AddOptionsWithValidateOnStart<ApplicationOptions>()
 			.BindConfiguration(ApplicationOptions.ConfigurationSectionName);
 		services
@@ -51,6 +54,7 @@ internal static class ServiceCollectionExtensions
 
 	internal static IServiceCollection AddAppOptionsValidators(this IServiceCollection services)
 	{
+		services.AddSingleton<IValidateOptions<WebDavOptions>, WebDavOptionsValidator>();
 		services.AddSingleton<IValidateOptions<ApplicationOptions>, ApplicationOptionsValidator>();
 		services.AddSingleton<IValidateOptions<ConnectionStringsOptions>, ConnectionStringsOptionsValidator>();
 		services.AddSingleton<IValidateOptions<SeqOptions>, SeqOptionsValidator>();
