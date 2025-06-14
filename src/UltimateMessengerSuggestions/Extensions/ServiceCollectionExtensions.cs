@@ -191,4 +191,17 @@ internal static class ServiceCollectionExtensions
 
 		return services;
 	}
+
+	internal static IServiceCollection AddCorsConfiguration(this IServiceCollection services)
+	{
+		services.AddCors(options =>
+		{
+			options.AddPolicy("AllowAllOrigins",
+				builder => builder
+					.AllowAnyOrigin()
+					.AllowAnyMethod()
+					.AllowAnyHeader());
+		});
+		return services;
+	}	
 }
