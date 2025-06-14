@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Serilog;
 using UltimateMessengerSuggestions.Common;
 using UltimateMessengerSuggestions.Extensions;
+using UltimateMessengerSuggestions.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ try
 	Log.Logger = builder.CreateCompleteLogger();
 	builder.Logging.ClearProviders().AddSerilog(Log.Logger);
 	builder.Services.AddDatabaseConnection();
+	builder.Services.AddTransient<IMediaUploader, WebDavUploader>();
 	builder.Services.AddControllersWithJsonNamingPolicy();
 	builder.Services.AddMediatRFromAssembly();
 	builder.Services.AddAutoMapperFromAssembly();
