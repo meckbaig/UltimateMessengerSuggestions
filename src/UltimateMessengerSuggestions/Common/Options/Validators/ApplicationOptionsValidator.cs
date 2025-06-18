@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
+using System.Net;
 using System.Text;
-using UltimateMessengerSuggestions.Common.Options.Loggers;
 
 namespace UltimateMessengerSuggestions.Common.Options.Validators;
 
@@ -24,6 +24,22 @@ sealed class ApplicationOptionsValidator : IValidateOptions<ApplicationOptions>
 		{
 			failures.AppendLine($"'{ApplicationOptions.ConfigurationSectionName}:" +
 				$"{nameof(ApplicationOptions.CheckDbRetryDelay)}' must be greater than 0.");
+		}
+		if (options.KnownProxies == null)
+		{
+			failures.AppendLine($"'{ApplicationOptions.ConfigurationSectionName}:" +
+				$"{nameof(ApplicationOptions.KnownProxies)}' must not be null.");
+		}
+		else
+		{
+			foreach (var proxy in options.KnownProxies)
+			{
+				if (!IPAddress.TryParse(proxy, out _))
+				{
+					failures.AppendLine($"'{ApplicationOptions.ConfigurationSectionName}:" +
+						$"{nameof(ApplicationOptions.KnownProxies)}' contains not valid ip address ({proxy}).");
+				}
+			}
 		}
 
 		return failures.Length > 0
