@@ -1,9 +1,14 @@
 using Asp.Versioning.ApiExplorer;
+using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Text.Json;
 using UltimateMessengerSuggestions.Common.ExceptionHandlers;
 using UltimateMessengerSuggestions.Common.HealthChecks;
+using UltimateMessengerSuggestions.Common.Options;
 
 namespace UltimateMessengerSuggestions.Extensions;
 
@@ -16,8 +21,18 @@ internal static class ApplicationBuilderExtensions
 	/// <returns>The configured application configuration builder</returns>
 	public static IApplicationBuilder UseSwaggerDocumentation(this IApplicationBuilder builder)
 	{
+		var appOptions = builder.ApplicationServices.GetRequiredService<IOptions<ApplicationOptions>>().Value;
+		var forwardedHeadersOptions = new ForwardedHeadersOptions
+		{
+			ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+		};
+		appOptions.KnownProxies
+			.Select(IPAddress.Parse)
+			.ToList()
+			.ForEach(forwardedHeadersOptions.KnownProxies.Add);
+
 		// Enable processing of HTTP headers if the service is behind a reverse proxy.
-		builder.UseForwardedHeaders();
+		builder.UseForwardedHeaders(forwardedHeadersOptions);
 
 		// Configure Swagger URLs for correct operation behind a reverse proxy,
 		// using information from the HTTP request (scheme, host, base path)
