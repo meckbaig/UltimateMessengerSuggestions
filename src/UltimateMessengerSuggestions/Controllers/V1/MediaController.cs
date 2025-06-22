@@ -36,7 +36,7 @@ public class MediaController : ControllerBase
 	/// <param name="command">The command containing the details of the media item to be added.  This parameter cannot be null.</param>
 	/// <returns>An <see cref="ActionResult{T}"/> containing the response for the add media operation. The response includes details
 	/// about the success or failure of the operation.</returns>
-	[HttpPut]
+	[HttpPost]
 	public async Task<ActionResult<AddMediaResponse>> AddMedia(AddMediaCommand command)
 	{
 		var result = await _mediator.Send(command);
@@ -50,7 +50,7 @@ public class MediaController : ControllerBase
 	/// response is returned in JSON format.</remarks>
 	/// <param name="command">The command containing the details of the media item to be edited, including its identifier and updated properties.</param>
 	/// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="EditMediaCommand"/> object.</returns>
-	[HttpPost("{id}")]
+	[HttpPut("{id}")]
 	public async Task<IActionResult> EditMedia(EditMediaCommand command)
 	{
 		var result = await _mediator.Send(command);
