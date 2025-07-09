@@ -20,6 +20,12 @@ public class AppDbContext : DbContext, IAppDbContext
 	/// <inheritdoc/>
 	public DbSet<MediaFile> MediaFiles => Set<MediaFile>();
 
+	/// <inheritdoc/>
+	public DbSet<User> Users => Set<User>();
+
+	/// <inheritdoc/>
+	public DbSet<MessengerAccount> MessengerAccounts => Set<MessengerAccount>();
+
 	/// TODO: remove
 	public DbSet<MediaFileSearchResult> MediaFileSearchResults { get; set; }
 
