@@ -4,6 +4,7 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using System.Net;
 using UltimateMessengerSuggestions.Common.Options;
 using UltimateMessengerSuggestions.Models.Db.Enums;
+using UltimateMessengerSuggestions.Services.Interfaces;
 
 namespace UltimateMessengerSuggestions.Services;
 

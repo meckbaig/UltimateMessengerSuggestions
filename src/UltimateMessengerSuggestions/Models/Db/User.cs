@@ -18,6 +18,11 @@ public class User : IEntityWithId
 	public string UserHash { get; set; } = null!;
 
 	/// <summary>
+	/// Name of the user.
+	/// </summary>
+	public string Name { get; set; } = null!;
+
+	/// <summary>
 	/// Unique identifiers for the user from external client.
 	/// </summary>
 	public ICollection<MessengerAccount> MessengerAccounts { get; set; } = [];

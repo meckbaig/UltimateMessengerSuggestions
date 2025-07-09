@@ -8,7 +8,7 @@ using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.Common.Options;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Models.Db;
-using UltimateMessengerSuggestions.Services;
+using UltimateMessengerSuggestions.Services.Interfaces;
 
 namespace UltimateMessengerSuggestions.Features.Media;
 

@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net.Mime;
+using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Features.Auth;
 
 namespace UltimateMessengerSuggestions.Controllers.V1;
@@ -27,17 +28,29 @@ public class AuthController : Controller
 		_mediator = mediator;
 	}
 
+	/// <summary>
+	/// Registers a new user in the system for provided user hash.
+	/// </summary>
+	/// <returns>
+	/// Bearer token for the user after successful registration.
+	/// </returns>
 	[HttpPost]
 	public async Task<ActionResult<RegisterResponse>> Register(RegisterCommand command)
 	{
-		await _mediator.Send(command);
-		return Ok();
+		var result = await _mediator.Send(command);
+		return result.ToJsonResponse();
 	}
 
+	/// <summary>
+	/// Checks if a user exists in the system based on their messenger ID and client name.
+	/// </summary>
+	/// <returns>
+	/// Bearer token for the user after successful registration.
+	/// </returns>
 	[HttpGet]
 	public async Task<ActionResult<GetLoginResponse>> Login(GetLoginQuery query)
 	{
-		await _mediator.Send(query);
-		return Ok();
+		var result = await _mediator.Send(query);
+		return result.ToJsonResponse();
 	}
 }

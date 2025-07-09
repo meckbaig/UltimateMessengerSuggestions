@@ -1,6 +1,6 @@
 using UltimateMessengerSuggestions.Models.Db.Enums;
 
-namespace UltimateMessengerSuggestions.Services;
+namespace UltimateMessengerSuggestions.Services.Interfaces;
 
 /// <summary>
 /// Interface for uploading files to a WebDAV server.

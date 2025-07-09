@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net.Mime;
@@ -36,6 +37,7 @@ public class MediaController : ControllerBase
 	/// <param name="command">The command containing the details of the media item to be added.  This parameter cannot be null.</param>
 	/// <returns>An <see cref="ActionResult{T}"/> containing the response for the add media operation. The response includes details
 	/// about the success or failure of the operation.</returns>
+	[Authorize]
 	[HttpPost]
 	public async Task<ActionResult<AddMediaResponse>> AddMedia(AddMediaCommand command)
 	{
@@ -50,6 +52,7 @@ public class MediaController : ControllerBase
 	/// response is returned in JSON format.</remarks>
 	/// <param name="command">The command containing the details of the media item to be edited, including its identifier and updated properties.</param>
 	/// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="EditMediaCommand"/> object.</returns>
+	[Authorize]
 	[HttpPut("{id}")]
 	public async Task<IActionResult> EditMedia(EditMediaCommand command)
 	{
@@ -66,6 +69,7 @@ public class MediaController : ControllerBase
 	/// any required parameters.</param>
 	/// <returns>An <see cref="ActionResult{T}"/> containing a <see cref="DeleteMediaResponse"/> that indicates the result of the
 	/// delete operation.</returns>
+	[Authorize]
 	[HttpDelete("{id}")]
 	public async Task<IActionResult> DeleteMedia(DeleteMediaCommand command)
 	{
@@ -81,6 +85,7 @@ public class MediaController : ControllerBase
 	/// <param name="query">The query parameters used to filter and retrieve the media items. Cannot be null.</param>
 	/// <returns>An <see cref="ActionResult{T}"/> containing a <see cref="GetMediaResponse"/> object with the list of media items.
 	/// If no items match the query, the response will indicate an empty result.</returns>
+	[Authorize]
 	[HttpGet]
 	public async Task<ActionResult<GetMediaResponse>> GetList(GetMediaQuery query)
 	{
@@ -91,6 +96,7 @@ public class MediaController : ControllerBase
 	/// <summary>
 	/// Uploads a media file to the system and returns url for accessing it.
 	/// </summary>
+	[Authorize]
 	[HttpPost("upload")]
 	public async Task<ActionResult<UploadMediaResponse>> UploadMedia(UploadMediaCommand command)
 	{

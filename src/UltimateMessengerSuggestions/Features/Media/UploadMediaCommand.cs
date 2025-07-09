@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db.Enums;
-using UltimateMessengerSuggestions.Services;
+using UltimateMessengerSuggestions.Services.Interfaces;
 
 namespace UltimateMessengerSuggestions.Features.Media;
 

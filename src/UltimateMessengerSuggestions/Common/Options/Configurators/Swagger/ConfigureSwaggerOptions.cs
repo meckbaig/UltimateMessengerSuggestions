@@ -37,6 +37,30 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : 
 			});
 			options.ParameterFilter<CamelCaseQueryParameterFilter>();
 
+			options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+			{
+				In = ParameterLocation.Header,
+				Description = "Provide a valid token",
+				Name = "Authorization",
+				Type = SecuritySchemeType.Http,
+				BearerFormat = "JWT",
+				Scheme = "Bearer"
+			});
+			options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+			{
+				{
+					new OpenApiSecurityScheme()
+					{
+						Reference = new OpenApiReference()
+						{
+							Type = ReferenceType.SecurityScheme,
+							Id = "Bearer"
+						}
+					},
+					Array.Empty<string>()
+				}
+			});
+
 			var resolved = new Dictionary<Type, string>();
 			var used = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
 

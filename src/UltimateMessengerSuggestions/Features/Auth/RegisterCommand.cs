@@ -2,10 +2,12 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Principal;
 using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
+using UltimateMessengerSuggestions.Services.Interfaces;
 using static UltimateMessengerSuggestions.Features.Auth.RegisterCommand;
 
 namespace UltimateMessengerSuggestions.Features.Auth;
@@ -48,6 +50,10 @@ public record RegisterCommand : IRequest<RegisterResponse>
 /// </summary>
 public class RegisterResponse
 {
+	/// <summary>
+	/// JWT token for the user.
+	/// </summary>
+	public required string Token { get; set; }
 }
 
 internal class RegisterValidator : AbstractValidator<RegisterCommand>
@@ -77,10 +83,12 @@ internal class RegisterValidator : AbstractValidator<RegisterCommand>
 internal class RegisterHandler : IRequestHandler<RegisterCommand, RegisterResponse>
 {
 	private readonly IAppDbContext _context;
+	private readonly IJwtProvider _jwtProvider;
 
-	public RegisterHandler(IAppDbContext context)
+	public RegisterHandler(IAppDbContext context, IJwtProvider jwtProvider)
 	{
 		_context = context;
+		_jwtProvider = jwtProvider;
 	}
 
 	public async Task<RegisterResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -92,18 +100,26 @@ internal class RegisterHandler : IRequestHandler<RegisterCommand, RegisterRespon
 		{
 			throw new EntityNotFoundException($"User with hash {request.Body.UserHash} not found.");
 		}
-		if (!user.MessengerAccounts.Any(ma => ma.MessengerId == request.Body.MessengerId && ma.Client == request.Body.Client))
+
+		var account = user.MessengerAccounts
+			.SingleOrDefault(ma =>
+				ma.MessengerId == request.Body.MessengerId &&
+				ma.Client == request.Body.Client);
+
+		if (account == null)
 		{
-			var messengerAccount = new MessengerAccount
+			account = new MessengerAccount
 			{
 				MessengerId = request.Body.MessengerId,
 				Client = request.Body.Client,
 				User = user
 			};
-			user.MessengerAccounts.Add(messengerAccount);
+			user.MessengerAccounts.Add(account);
 			await _context.SaveChangesAsync(cancellationToken);
 		}
 
-		return new RegisterResponse();
+		string token = _jwtProvider.GenerateToken(account);
+
+		return new RegisterResponse { Token = token };
 	}
 }

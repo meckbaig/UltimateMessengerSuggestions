@@ -41,7 +41,7 @@ public record EditMediaCommand : IRequest<EditMediaResponse>
 }
 
 /// <summary>
-/// Response for the EditMediaCommand indicating the result of the deletion operation.
+/// Response for the EditMediaCommand indicating the success of the deletion operation.
 /// </summary>
 public class EditMediaResponse
 {

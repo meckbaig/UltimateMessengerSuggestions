@@ -1,15 +1,19 @@
 using Asp.Versioning;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 using UltimateMessengerSuggestions.Common.Behaviours;
 using UltimateMessengerSuggestions.Common.Conventions;
 using UltimateMessengerSuggestions.Common.Options;
@@ -27,6 +31,9 @@ internal static class ServiceCollectionExtensions
 {
 	internal static IServiceCollection AddAppOptions(this IServiceCollection services)
 	{
+		services
+			.AddOptionsWithValidateOnStart<JwtOptions>()
+			.BindConfiguration(JwtOptions.ConfigurationSectionName);
 		services
 			.AddOptionsWithValidateOnStart<WebDavOptions>()
 			.BindConfiguration(WebDavOptions.ConfigurationSectionName);
@@ -54,6 +61,7 @@ internal static class ServiceCollectionExtensions
 
 	internal static IServiceCollection AddAppOptionsValidators(this IServiceCollection services)
 	{
+		services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
 		services.AddSingleton<IValidateOptions<WebDavOptions>, WebDavOptionsValidator>();
 		services.AddSingleton<IValidateOptions<ApplicationOptions>, ApplicationOptionsValidator>();
 		services.AddSingleton<IValidateOptions<ConnectionStringsOptions>, ConnectionStringsOptionsValidator>();
@@ -193,6 +201,37 @@ internal static class ServiceCollectionExtensions
 					.AddPrometheusExporter(); // <-- creates /metrics
 			});
 
+		return services;
+	}
+
+	internal static IServiceCollection AddJwtAuthentication(this IServiceCollection services)
+	{
+		var jwtOptions = services
+			.BuildServiceProvider()
+			.GetRequiredService<IOptions<JwtOptions>>()
+			.Value;
+		services.AddAuthentication(options =>
+		{
+			options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+			options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+		})
+		.AddJwtBearer(options =>
+		{
+#if DEBUG
+			options.RequireHttpsMetadata = false;
+#endif
+			options.SaveToken = true;
+			options.TokenValidationParameters = new TokenValidationParameters
+			{
+				ValidateIssuer = true,
+				ValidateAudience = true,
+				ValidateLifetime = false,
+				ValidateIssuerSigningKey = true,
+				ValidIssuer = jwtOptions.Issuer,
+				ValidAudience = jwtOptions.Audience,
+				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
+			};
+		});
 		return services;
 	}
 

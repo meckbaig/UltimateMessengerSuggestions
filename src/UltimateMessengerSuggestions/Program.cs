@@ -3,6 +3,7 @@ using Serilog;
 using UltimateMessengerSuggestions.Common;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Services;
+using UltimateMessengerSuggestions.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ try
 	builder.Logging.ClearProviders().AddSerilog(Log.Logger);
 	builder.Services.AddDatabaseConnection();
 	builder.Services.AddTransient<IMediaUploader, WebDavUploader>();
+	builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 	builder.Services.AddControllersWithJsonNamingPolicy();
 	builder.Services.AddMediatRFromAssembly();
 	builder.Services.AddAutoMapperFromAssembly();
@@ -23,6 +25,8 @@ try
 	builder.Services.AddSwaggerSupport();
 	builder.Services.AddAppHealthChecks();
 	builder.Services.AddOpenTelemetryMetrics();
+	builder.Services.AddJwtAuthentication();
+	builder.Services.AddAuthorization();
 	builder.Services.AddCorsConfiguration();
 
 	var app = builder.Build();
@@ -33,6 +37,8 @@ try
 	app.MapControllers();
 	app.MapHealthCheckEndpoint();
 	app.MapOpenTelemetryMetricsEndpoint();
+	app.UseAuthentication();
+	app.UseAuthorization();
 
 	app.Run();
 
