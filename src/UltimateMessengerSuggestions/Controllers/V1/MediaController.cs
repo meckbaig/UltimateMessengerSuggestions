@@ -89,12 +89,8 @@ public class MediaController : ControllerBase
 	}
 
 	/// <summary>
-	/// Edits an existing media item based on the provided command.
+	/// Uploads a media file to the system and returns url for accessing it.
 	/// </summary>
-	/// <remarks>This method processes the edit operation by sending the provided command to the mediator. The
-	/// response is returned in JSON format.</remarks>
-	/// <param name="command">The command containing the details of the media item to be edited, including its identifier and updated properties.</param>
-	/// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="EditMediaCommand"/> object.</returns>
 	[HttpPost("upload")]
 	public async Task<ActionResult<UploadMediaResponse>> UploadMedia(UploadMediaCommand command)
 	{
