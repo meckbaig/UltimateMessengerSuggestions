@@ -1,11 +1,15 @@
 using FluentValidation;
+using Meckbaig.Cqrs.Abstractons;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using UltimateMessengerSuggestions.Common.Abstractions;
+using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
+using UltimateMessengerSuggestions.Models.Dtos.Auth;
 using UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 
 namespace UltimateMessengerSuggestions.Features.Suggestions;
@@ -13,7 +17,7 @@ namespace UltimateMessengerSuggestions.Features.Suggestions;
 /// <summary>
 /// Search media by search string query parameters.
 /// </summary>
-public record GetSuggestionsQuery : IRequest<GetSuggestionsResponse>
+public record GetSuggestionsQuery : BaseAuthentificatedRequest<UserLoginDto, GetSuggestionsResponse>
 {
 	/// <summary>
 	/// Search string to find media files by tags.
@@ -31,7 +35,7 @@ public record GetSuggestionsQuery : IRequest<GetSuggestionsResponse>
 	/// Execution type for the query.
 	/// </summary>
 	[FromQuery]
-	public string QueryExecutionType { get; set; } = "ef";
+	public string QueryExecutionType { get; set; } = ExecutionType.Ef;
 
 	/// <summary>
 	/// Execution types for the query.
@@ -58,7 +62,7 @@ public record GetSuggestionsQuery : IRequest<GetSuggestionsResponse>
 /// <summary>
 /// Response results with media files that match the search criteria.
 /// </summary>
-public class GetSuggestionsResponse
+public class GetSuggestionsResponse: BaseResponse
 {
 	/// <summary>
 	/// List of media files that match the search criteria.
@@ -90,7 +94,10 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 
 	public async Task<GetSuggestionsResponse> Handle(GetSuggestionsQuery request, CancellationToken cancellationToken)
 	{
-		var media = await SearchMediaByTagsAsync(request.SearchString, request.QueryExecutionType, cancellationToken);
+		if (!request.IsAuthenticated)
+			throw new UnauthorizedException("User is not authenticated.");
+
+		var media = await SearchMediaByTagsAsync(request.SearchString, request.QueryExecutionType, request.UserLogin.UserId, cancellationToken);
 
 		return new GetSuggestionsResponse
 		{
@@ -98,7 +105,7 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 		};
 	}
 
-	private async Task<List<MediaFile>> SearchMediaByTagsAsync(string query, string execType, CancellationToken cancellationToken)
+	private async Task<List<MediaFile>> SearchMediaByTagsAsync(string query, string execType, int userId, CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrWhiteSpace(query))
 			return [];
@@ -116,9 +123,9 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 		switch (execType)
 		{
 			case "procedure":
-				return await FindByTagsUsingProcedureAsync(fullPhrases, rawWords, cancellationToken);
+				return await FindByTagsUsingProcedureAsync(fullPhrases, rawWords, userId, cancellationToken);
 			case "ef":
-				return await FindByTagsUsingEf3Async(fullPhrases, rawWords, cancellationToken);
+				return await FindByTagsUsingEf3Async(fullPhrases, rawWords, userId, cancellationToken);
 			case "ef-compiled":
 				// return FindByTagsUsingEfCompiledAsync(fullPhrases, rawWords, cancellationToken);
 			default:
@@ -200,9 +207,13 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 	}
 
 	// 2ms
-	public async Task<List<MediaFile>> FindByTagsUsingEf3Async(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
+	public async Task<List<MediaFile>> FindByTagsUsingEf3Async(
+		IEnumerable<string> fullPhrases,
+		IEnumerable<string> rawWords,
+		int userId,
+		CancellationToken cancellationToken)
 	{
-		// Шаг 1: Получаем ID медиафайлов с совпадениями
+		// Step 1: Get media file IDs with matches
 		var mediaFileIds = await _context.Tags
 			.AsNoTracking()
 			.Where(t =>
@@ -213,12 +224,14 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 			.Distinct()
 			.ToListAsync(cancellationToken);
 
-		// Шаг 2: Получаем медиафайлы с тегами (полностью в памяти)
+		// Step 2: Get media files by IDs and calculate scores (in memory)
 		var mediaFiles = _context.MediaFiles
 			.AsNoTracking()
-			.Where(mf => mediaFileIds.Contains(mf.Id))
-			.Include(mf => mf.Tags) // Жадно загружаем теги
-			.AsEnumerable() // Переключаемся на вычисления в памяти
+			.Where(mf => 
+				mediaFileIds.Contains(mf.Id) && 
+				(mf.OwnerId == userId || mf.IsPublic))
+			.Include(mf => mf.Tags)
+			.AsEnumerable() // Materialize the query to memory
 			.Select(mf => new
 			{
 				MediaFile = mf,
@@ -289,11 +302,15 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 	//}
 
 	// 1ms
-	public async Task<List<MediaFile>> FindByTagsUsingProcedureAsync(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
+	public async Task<List<MediaFile>> FindByTagsUsingProcedureAsync(
+		IEnumerable<string> fullPhrases,
+		IEnumerable<string> rawWords,
+		int userId,
+		CancellationToken cancellationToken)
 	{
 		// procedure call
 		var results = await _context.MediaFileSearchResults
-			.FromSqlInterpolated($"SELECT * FROM find_media_by_tags({fullPhrases.ToArray()}, {rawWords.ToArray()})")
+			.FromSqlInterpolated($"SELECT * FROM find_media_by_tags({fullPhrases.ToArray()}, {rawWords.ToArray()}, {userId})")
 			.ToListAsync(cancellationToken);
 
 		// data grouping and transformation
@@ -316,6 +333,7 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 				   : new MediaFile();
 
 			   mediaFile.Id = first.Id;
+			   mediaFile.PublicId = first.PublicId;
 			   mediaFile.Description = first.Description;
 			   mediaFile.MediaType = Enum.Parse<MediaType>(first.MediaType, true);
 			   mediaFile.MediaUrl = first.MediaUrl;

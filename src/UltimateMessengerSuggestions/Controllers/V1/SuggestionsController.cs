@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net.Mime;
@@ -33,6 +34,7 @@ public class SuggestionsController : ControllerBase
 	/// </summary>
 	/// <param name="query">Search media by search string query parameters.</param>
 	/// <returns>Response results with media files that match the search criteria.</returns>
+	[Authorize]
 	[HttpGet]
 	public async Task<ActionResult<GetSuggestionsResponse>> GetSuggestions(GetSuggestionsQuery query)
 	{
