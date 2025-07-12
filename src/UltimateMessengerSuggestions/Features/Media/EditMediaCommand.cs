@@ -1,11 +1,14 @@
 using FluentValidation;
+using Meckbaig.Cqrs.Abstractons;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using UltimateMessengerSuggestions.Common.Abstractions;
 using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
+using UltimateMessengerSuggestions.Models.Dtos.Auth;
 using UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 using static UltimateMessengerSuggestions.Features.Media.EditMediaCommand;
 
@@ -14,7 +17,7 @@ namespace UltimateMessengerSuggestions.Features.Media;
 /// <summary>
 /// Command to edit a media file.
 /// </summary>
-public record EditMediaCommand : IRequest<EditMediaResponse>
+public record EditMediaCommand : BaseAuthentificatedRequest<UserLoginDto, EditMediaResponse>
 {
 	/// <summary>
 	/// The ID of the media file to be edited.
@@ -43,7 +46,7 @@ public record EditMediaCommand : IRequest<EditMediaResponse>
 /// <summary>
 /// Response for the EditMediaCommand indicating the success of the deletion operation.
 /// </summary>
-public class EditMediaResponse
+public class EditMediaResponse : BaseResponse
 {
 }
 
@@ -78,13 +81,16 @@ internal class EditMediaHandler : IRequestHandler<EditMediaCommand, EditMediaRes
 
 	public async Task<EditMediaResponse> Handle(EditMediaCommand request, CancellationToken cancellationToken)
 	{
+		if (!request.IsAuthenticated)
+			throw new UnauthorizedException("User is not authenticated.");
+
 		var mediaFile = await _context.MediaFiles
 			.Include(m => m.Tags)
 			.FirstOrDefaultAsync(m => m.PublicId == request.Id, cancellationToken);
 		if (mediaFile == null)
-		{
 			throw new EntityNotFoundException($"Media file with Id {request.Id} not found.");
-		}
+		if (mediaFile.OwnerId != request.UserLogin.UserId)
+			throw new ForbiddenAccessException("You do not have permission to edit this media file.");
 
 		mediaFile = await mediaFile.FromEditDto(request.Body.MediaFile, TagConversion, cancellationToken);
 		await _context.SaveChangesAsync(cancellationToken);
