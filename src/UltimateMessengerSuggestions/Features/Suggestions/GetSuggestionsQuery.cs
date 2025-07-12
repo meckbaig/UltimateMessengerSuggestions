@@ -6,7 +6,7 @@ using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
-using UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
+using UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 
 namespace UltimateMessengerSuggestions.Features.Suggestions;
 

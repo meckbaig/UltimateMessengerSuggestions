@@ -6,7 +6,7 @@ using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
-using UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
+using UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 using static UltimateMessengerSuggestions.Features.Media.EditMediaCommand;
 
 namespace UltimateMessengerSuggestions.Features.Media;
@@ -20,7 +20,7 @@ public record EditMediaCommand : IRequest<EditMediaResponse>
 	/// The ID of the media file to be edited.
 	/// </summary>
 	[FromRoute]
-	public required int Id { get; init; }
+	public required string Id { get; init; }
 
 	/// <summary>
 	/// The body of the request containing the media file information.
@@ -36,7 +36,7 @@ public record EditMediaCommand : IRequest<EditMediaResponse>
 		/// <summary>
 		/// The media file to be edited.
 		/// </summary>
-		public required MediaFileDto MediaFile { get; init; }
+		public required EditMediaFileDto MediaFile { get; init; }
 	}
 }
 
@@ -62,7 +62,7 @@ internal class EditMediaValidator : AbstractValidator<EditMediaCommand>
 		{
 			RuleFor(x => x.MediaFile)
 				.NotNull()
-				.SetValidator(new MediaFileDto.Validator());
+				.SetValidator(new EditMediaFileDto.Validator());
 		}
 	}
 }
@@ -80,13 +80,13 @@ internal class EditMediaHandler : IRequestHandler<EditMediaCommand, EditMediaRes
 	{
 		var mediaFile = await _context.MediaFiles
 			.Include(m => m.Tags)
-			.FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
+			.FirstOrDefaultAsync(m => m.PublicId == request.Id, cancellationToken);
 		if (mediaFile == null)
 		{
 			throw new EntityNotFoundException($"Media file with Id {request.Id} not found.");
 		}
 
-		mediaFile = await mediaFile.FromDto(request.Body.MediaFile, TagConversion, cancellationToken);
+		mediaFile = await mediaFile.FromEditDto(request.Body.MediaFile, TagConversion, cancellationToken);
 		await _context.SaveChangesAsync(cancellationToken);
 
 		return new EditMediaResponse();

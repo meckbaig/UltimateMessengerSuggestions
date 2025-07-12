@@ -6,7 +6,6 @@ using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Dtos.Features.Media;
-using UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 using static UltimateMessengerSuggestions.Features.Media.AddMediaCommand;
 
 namespace UltimateMessengerSuggestions.Features.Media;
@@ -30,7 +29,7 @@ public record AddMediaCommand : IRequest<AddMediaResponse>
 		/// <summary>
 		/// The media file to be added.
 		/// </summary>
-		public required MediaFileDto MediaFile { get; init; }
+		public required EditMediaFileDto MediaFile { get; init; }
 	}
 }
 
@@ -42,7 +41,7 @@ public class AddMediaResponse
 	/// <summary>
 	/// The media file that was added to the system.
 	/// </summary>
-	public required EditMediaFileDto MediaFile { get; init; }
+	public required MediaFileDto MediaFile { get; init; }
 }
 
 internal class AddMediaValidator : AbstractValidator<AddMediaCommand>
@@ -60,7 +59,7 @@ internal class AddMediaValidator : AbstractValidator<AddMediaCommand>
 		{
 			RuleFor(x => x.MediaFile)
 				.NotNull()
-				.SetValidator(new MediaFileDto.Validator());
+				.SetValidator(new EditMediaFileDto.Validator());
 		}
 	}
 }
@@ -82,7 +81,7 @@ internal class AddMediaHandler : IRequestHandler<AddMediaCommand, AddMediaRespon
 
 		return new AddMediaResponse
 		{
-			MediaFile = mediaFile.ToEditDto()
+			MediaFile = mediaFile.ToDto()
 		};
 	}
 

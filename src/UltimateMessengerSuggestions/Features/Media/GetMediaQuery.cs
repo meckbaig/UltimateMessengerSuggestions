@@ -35,13 +35,13 @@ public record GetMediaQuery : BaseListQuery<GetMediaResponse>
 /// <summary>
 /// Response for the GetMediaQuery, containing a list of media files.
 /// </summary>
-public class GetMediaResponse : BaseListQueryResponse<EditMediaFileDto>
+public class GetMediaResponse : BaseListQueryResponse<MediaFileDto>
 {
 
 }
 
 internal class GetMediaQueryValidator : BaseListQueryValidator
-	<GetMediaQuery, GetMediaResponse, EditMediaFileDto, MediaFile>
+	<GetMediaQuery, GetMediaResponse, MediaFileDto, MediaFile>
 {
 	public GetMediaQueryValidator(IMapper mapper) : base(mapper)
 	{
@@ -60,7 +60,7 @@ internal class GetMediaQueryHandler : IRequestHandler<GetMediaQuery, GetMediaRes
 
 	public async Task<GetMediaResponse> Handle(GetMediaQuery request, CancellationToken cancellationToken)
 	{
-		request.AddFilterExpression(nameof(EditMediaFileDto.Tags), GetTagsFilterExpression);
+		request.AddFilterExpression(nameof(MediaFileDto.Tags), GetTagsFilterExpression);
 
 		var mediaFiles = await _context.MediaFiles.Include(m => m.Tags)
 			.AddFilters(request.GetFilterExpressions())
@@ -68,7 +68,7 @@ internal class GetMediaQueryHandler : IRequestHandler<GetMediaQuery, GetMediaRes
 			.Skip(request.Skip).Take(request.Take > 0 ? request.Take : int.MaxValue)
 			.ToListAsync(cancellationToken);
 
-		var result = mediaFiles.ToEditDtos();
+		var result = mediaFiles.ToDtos();
 
 		return new GetMediaResponse
 		{

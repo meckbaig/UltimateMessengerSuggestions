@@ -1,4 +1,3 @@
-using OpenTelemetry.Resources;
 using FluentValidation;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
@@ -22,43 +21,12 @@ internal static class MappingExtensions
 		};
 
 		return new MediaFileDto(
+			id: source.PublicId,
 			description: source.Description,
 			mediaUrl: source.MediaUrl,
 			mediaType: source.MediaType.ToString().ToLower(),
 			tags: source.Tags.Select(t => t.Name).ToList(),
 			messageLocation: location);
-	}
-
-	public static EditMediaFileDto ToEditDto(this MediaFile source)
-	{
-		MessageLocationDto? location = source switch
-		{
-			VkVoiceMediaFile voice => new MessageLocationDto(
-				platform: Platform.Vk.ToString().ToLower(),
-				dialogId: voice.VkConversation,
-				messageId: voice.VkMessageId.ToString()
-			),
-			_ => null
-		};
-
-		return new EditMediaFileDto(
-			id: source.Id,
-			description: source.Description,
-			mediaUrl: source.MediaUrl,
-			mediaType: source.MediaType.ToString().ToLower(),
-			tags: source.Tags.Select(t => t.Name).ToList(),
-			messageLocation: location);
-	}
-
-	public static EditMediaFileDto ToEditDto(this MediaFileDto source, int id)
-	{
-		return new EditMediaFileDto(
-			id: id,
-			description: source.Description,
-			mediaUrl: source.MediaUrl,
-			mediaType: source.MediaType.ToString().ToLower(),
-			tags: source.Tags,
-			messageLocation: source.MessageLocation);
 	}
 
 	public static IEnumerable<MediaFileDto> ToDtos(this IEnumerable<MediaFile> source)
@@ -66,13 +34,8 @@ internal static class MappingExtensions
 		return source.Select(ToDto);
 	}
 
-	public static IEnumerable<EditMediaFileDto> ToEditDtos(this IEnumerable<MediaFile> source)
-	{
-		return source.Select(ToEditDto);
-	}
-
 	public static async Task<MediaFile> ToDbModelAsync(
-		this MediaFileDto source, 
+		this EditMediaFileDto source,
 		Func<IEnumerable<string>, CancellationToken, Task<IEnumerable<Tag>>> tagConversion,
 		CancellationToken cancellationToken = default)
 	{
@@ -106,9 +69,9 @@ internal static class MappingExtensions
 		return mediaFile;
 	}
 
-	public static async Task<MediaFile> FromDto(
-		this MediaFile source, 
-		MediaFileDto dto, 
+	public static async Task<MediaFile> FromEditDto(
+		this MediaFile source,
+		EditMediaFileDto dto,
 		Func<int, IEnumerable<Tag>, IEnumerable<string>, CancellationToken, Task<IEnumerable<Tag>>> tagConversion,
 		CancellationToken cancellationToken = default)
 	{

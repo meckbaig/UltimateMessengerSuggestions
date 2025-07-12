@@ -21,7 +21,7 @@ public record DeleteMediaCommand : IRequest<DeleteMediaResponse>
 	/// The ID of the media file to be deleted.
 	/// </summary>
 	[FromRoute]
-	public required int Id { get; init; }
+	public required string Id { get; init; }
 }
 
 /// <summary>
@@ -48,7 +48,7 @@ internal class DeleteMediaHandler : IRequestHandler<DeleteMediaCommand, DeleteMe
 	{
 		var mediaFile = await _context.MediaFiles
 			.Include(m => m.Tags)
-			.FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
+			.FirstOrDefaultAsync(m => m.PublicId == request.Id, cancellationToken);
 		if (mediaFile == null)
 		{
 			throw new EntityNotFoundException($"Media file with Id {request.Id} not found.");

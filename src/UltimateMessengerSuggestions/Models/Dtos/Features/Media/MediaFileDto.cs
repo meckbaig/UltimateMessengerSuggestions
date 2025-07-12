@@ -1,28 +1,31 @@
 using AutoMapper;
-using FluentValidation;
 using Meckbaig.Cqrs.Dto.Abstractions;
 using Meckbaig.Cqrs.ListFliters.Attrubutes;
-using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
-using UltimateMessengerSuggestions.Models.Db.Enums;
 using UltimateMessengerSuggestions.Models.Dtos.Features.Suggestions;
 
 namespace UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 
 /// <summary>
-/// Information about an editable media file.
+/// Information about a media file.
 /// </summary>
-public record EditMediaFileDto : IBaseDto, IEditDto
+public record MediaFileDto : IBaseDto
 {
+	/// <summary>
+	/// Public identifier of the media file.
+	/// </summary>
+	[Filterable(CompareMethod.Equals)]
+	public string Id { get; init; } = null!;
+
 	/// <summary>
 	/// Media file type.
 	/// </summary>
 	public string MediaType { get; init; } = null!;
 
-    /// <summary>
-    /// Media file URL.
-    /// </summary>
-    public string MediaUrl { get; init; } = null!;
+	/// <summary>
+	/// Media file URL.
+	/// </summary>
+	public string MediaUrl { get; init; } = null!;
 
 	/// <summary>
 	/// Description of the media file content.
@@ -42,49 +45,26 @@ public record EditMediaFileDto : IBaseDto, IEditDto
 	public List<string> Tags { get; init; } = [];
 
 	/// <summary>
-	/// Constructor for creating an editable media file DTO with required fields and a list of tags.
+	/// Constructor for creating a media file DTO with required fields and a list of tags.
 	/// </summary>
+	/// <param name="id">File identifier.</param>
 	/// <param name="description">Media file description.</param>
 	/// <param name="mediaUrl">Media file URL.</param>
 	/// <param name="mediaType">Media file type.</param>
 	/// <param name="tags">List of tags associated with the file.</param>
 	/// <param name="messageLocation">Location of the message associated with the media file, if applicable.</param>
-	public EditMediaFileDto(string description, string mediaUrl, string mediaType, List<string> tags, MessageLocationDto? messageLocation = null)
-    {
-        Description = description;
-        MediaUrl = mediaUrl;
-        MediaType = mediaType;
-        Tags = tags;
-        MessageLocation = messageLocation;
+	public MediaFileDto(string id, string description, string mediaUrl, string mediaType, List<string> tags, MessageLocationDto? messageLocation = null)
+	{
+		Id = id;
+		Description = description;
+		MediaUrl = mediaUrl;
+		MediaType = mediaType;
+		Tags = tags;
+		MessageLocation = messageLocation;
 	}
-
-	/// <inheritdoc />
-	public static Type GetValidatorType() => typeof(Validator);
 
 	/// <inheritdoc />
 	public static Type GetOriginType() => typeof(MediaFile);
-
-	internal class Validator : AbstractValidator<EditMediaFileDto>
-	{
-		public Validator()
-		{
-			RuleFor(x => x.MediaType).MustBeValidEnum<EditMediaFileDto, MediaType>();
-			RuleFor(x => x.MediaUrl).NotEmpty();
-			RuleFor(x => x.Description).NotEmpty();
-			RuleFor(x => x.Tags)
-				.NotNull()
-				.NotEmpty()
-				.Must(tags => tags.All(tag => !string.IsNullOrWhiteSpace(tag)))
-				.WithMessage("Tags cannot be empty or whitespace.");
-			RuleFor(x => x.MessageLocation)
-				.NotNull()
-				.WithMessage("MessageLocation is required when MediaType is 'voice'.")
-				.When(x => Enum.TryParse<MediaType>(x.MediaType, true, out var type) && type == Db.Enums.MediaType.Voice);
-			RuleFor(x => x.MessageLocation)
-				.SetValidator(new MessageLocationDto.Validator())
-				.When(x => x.MessageLocation != null);
-		}
-	}
 
 	/// <remarks>
 	/// For filters only
