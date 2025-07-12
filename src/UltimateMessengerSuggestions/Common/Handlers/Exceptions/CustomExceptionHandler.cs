@@ -17,6 +17,8 @@ internal class CustomExceptionHandler : IExceptionHandler
 		{
 			{ typeof(ValidationException), HandleValidationException },
 			{ typeof(EntityNotFoundException), HandleNotFoundException },
+			{ typeof(ForbiddenAccessException), HandleForbiddenAccessException },
+			{ typeof(UnauthorizedException), HandleUnauthorizedException },
 		};
 	}
 
@@ -62,7 +64,7 @@ internal class CustomExceptionHandler : IExceptionHandler
 			await context.Response.WriteAsJsonAsync(new ProblemDetails
 			{
 				Type = "https://datatracker.ietf.org/doc/html/rfc9110#name-400-bad-request",
-				Status = StatusCodes.Status400BadRequest,
+				Status = context.Response.StatusCode,
 				Title = "Validation error",
 				Detail = validationException.Message
 			});
@@ -77,8 +79,33 @@ internal class CustomExceptionHandler : IExceptionHandler
 		await context.Response.WriteAsJsonAsync(new ProblemDetails
 		{
 			Type = "https://datatracker.ietf.org/doc/html/rfc9110#name-404-not-found",
-			Status = StatusCodes.Status404NotFound,
+			Status = context.Response.StatusCode,
 			Title = "Resource not found",
+			Detail = ex.Message
+		});
+	}
+
+	private static async Task HandleForbiddenAccessException(HttpContext context, Exception ex)
+	{
+		context.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+		await context.Response.WriteAsJsonAsync(new ProblemDetails
+		{
+			Type = "https://datatracker.ietf.org/doc/html/rfc9110#name-403-forbidden",
+			Status = context.Response.StatusCode,
+			Title = "Access denied",
+			Detail = ex.Message
+		});
+	}
+
+	private static async Task HandleUnauthorizedException(HttpContext context, Exception ex)
+	{
+		context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+		await context.Response.WriteAsJsonAsync(new ProblemDetails
+		{
+			Type = "https://datatracker.ietf.org/doc/html/rfc9110#name-401-unauthorized",
+			Status = context.Response.StatusCode,
+			Title = "Unauthorized",
 			Detail = ex.Message
 		});
 	}
