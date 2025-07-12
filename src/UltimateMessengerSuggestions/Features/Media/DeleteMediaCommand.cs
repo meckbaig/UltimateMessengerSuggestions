@@ -1,13 +1,16 @@
 using FluentValidation;
+using Meckbaig.Cqrs.Abstractons;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Web;
+using UltimateMessengerSuggestions.Common.Abstractions;
 using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.Common.Options;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Models.Db;
+using UltimateMessengerSuggestions.Models.Dtos.Auth;
 using UltimateMessengerSuggestions.Services.Interfaces;
 
 namespace UltimateMessengerSuggestions.Features.Media;
@@ -15,7 +18,7 @@ namespace UltimateMessengerSuggestions.Features.Media;
 /// <summary>
 /// Command to delete a media file from the system.
 /// </summary>
-public record DeleteMediaCommand : IRequest<DeleteMediaResponse>
+public record DeleteMediaCommand : BaseAuthentificatedRequest<UserLoginDto, DeleteMediaResponse>
 {
 	/// <summary>
 	/// The ID of the media file to be deleted.
@@ -27,7 +30,7 @@ public record DeleteMediaCommand : IRequest<DeleteMediaResponse>
 /// <summary>
 /// Response for the DeleteMediaCommand indicating the result of the deletion operation.
 /// </summary>
-public class DeleteMediaResponse
+public class DeleteMediaResponse : BaseResponse
 {
 }
 
@@ -46,13 +49,16 @@ internal class DeleteMediaHandler : IRequestHandler<DeleteMediaCommand, DeleteMe
 
 	public async Task<DeleteMediaResponse> Handle(DeleteMediaCommand request, CancellationToken cancellationToken)
 	{
+		if (!request.IsAuthenticated)
+			throw new UnauthorizedException("User is not authenticated.");
+
 		var mediaFile = await _context.MediaFiles
 			.Include(m => m.Tags)
 			.FirstOrDefaultAsync(m => m.PublicId == request.Id, cancellationToken);
 		if (mediaFile == null)
-		{
 			throw new EntityNotFoundException($"Media file with Id {request.Id} not found.");
-		}
+		if (mediaFile.OwnerId != request.UserLogin.UserId)
+			throw new ForbiddenAccessException("You do not have permission to delete this media file.");
 
 		List<int> tagIdsToCheck = mediaFile.Tags
 			.Select(t => t.Id)

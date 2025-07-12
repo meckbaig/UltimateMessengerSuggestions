@@ -1,10 +1,14 @@
 using FluentValidation;
+using Meckbaig.Cqrs.Abstractons;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using UltimateMessengerSuggestions.Common.Abstractions;
+using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
+using UltimateMessengerSuggestions.Models.Dtos.Auth;
 using UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 using static UltimateMessengerSuggestions.Features.Media.AddMediaCommand;
 
@@ -13,7 +17,7 @@ namespace UltimateMessengerSuggestions.Features.Media;
 /// <summary>
 /// Command to add a media file to the system.
 /// </summary>
-public record AddMediaCommand : IRequest<AddMediaResponse>
+public record AddMediaCommand : BaseAuthentificatedRequest<UserLoginDto, AddMediaResponse>
 {
 	/// <summary>
 	/// The body of the request containing the media file information.
@@ -36,7 +40,7 @@ public record AddMediaCommand : IRequest<AddMediaResponse>
 /// <summary>
 /// Response for the AddMediaCommand containing the added media file information.
 /// </summary>
-public class AddMediaResponse
+public class AddMediaResponse : BaseResponse
 {
 	/// <summary>
 	/// The media file that was added to the system.
@@ -75,7 +79,10 @@ internal class AddMediaHandler : IRequestHandler<AddMediaCommand, AddMediaRespon
 
 	public async Task<AddMediaResponse> Handle(AddMediaCommand request, CancellationToken cancellationToken)
 	{
-		var mediaFile = await request.Body.MediaFile.ToDbModelAsync(TagConversion, cancellationToken);
+		if (!request.IsAuthenticated)
+			throw new UnauthorizedException("User is not authenticated.");
+
+		var mediaFile = await request.Body.MediaFile.ToDbModelAsync(request.UserLogin.UserId, TagConversion, cancellationToken);
 		await _context.MediaFiles.AddAsync(mediaFile, cancellationToken);
 		await _context.SaveChangesAsync(cancellationToken);
 

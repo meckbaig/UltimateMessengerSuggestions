@@ -25,6 +25,11 @@ public record EditMediaFileDto : IEditDto
     public string MediaUrl { get; init; } = null!;
 
 	/// <summary>
+	/// Indicates whether the media file is free to use.
+	/// </summary>
+	public bool IsPublic { get; init; } = false;
+
+	/// <summary>
 	/// Description of the media file content.
 	/// </summary>
 	[Filterable(CompareMethod.OriginalContainsInput)]
@@ -70,6 +75,7 @@ public record EditMediaFileDto : IEditDto
 		{
 			RuleFor(x => x.MediaType).MustBeValidEnum<EditMediaFileDto, MediaType>();
 			RuleFor(x => x.MediaUrl).NotEmpty();
+			RuleFor(x => x.IsPublic).NotNull();
 			RuleFor(x => x.Description).NotEmpty();
 			RuleFor(x => x.Tags)
 				.NotNull()

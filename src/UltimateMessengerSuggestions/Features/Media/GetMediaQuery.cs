@@ -6,9 +6,12 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using UltimateMessengerSuggestions.Common.Abstractions;
+using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.DbContexts;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Models.Db;
+using UltimateMessengerSuggestions.Models.Dtos.Auth;
 using UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 
 namespace UltimateMessengerSuggestions.Features.Media;
@@ -16,7 +19,7 @@ namespace UltimateMessengerSuggestions.Features.Media;
 /// <summary>
 /// Query to retrieve a list of media files with filtering and pagination options.
 /// </summary>
-public record GetMediaQuery : BaseListQuery<GetMediaResponse>
+public record GetMediaQuery : BaseAuthentificatedListQuery<UserLoginDto, GetMediaResponse>
 {
 	/// <inheritdoc />
 	[FromQuery]
@@ -60,9 +63,14 @@ internal class GetMediaQueryHandler : IRequestHandler<GetMediaQuery, GetMediaRes
 
 	public async Task<GetMediaResponse> Handle(GetMediaQuery request, CancellationToken cancellationToken)
 	{
+		if (!request.IsAuthenticated)
+			throw new UnauthorizedException("User is not authenticated.");
+
 		request.AddFilterExpression(nameof(MediaFileDto.Tags), GetTagsFilterExpression);
 
-		var mediaFiles = await _context.MediaFiles.Include(m => m.Tags)
+		var mediaFiles = await _context.MediaFiles
+			.Include(m => m.Tags)
+			.Where(m => m.OwnerId == request.UserLogin.UserId || m.IsPublic)
 			.AddFilters(request.GetFilterExpressions())
 			.AddOrderBy(request.GetOrderExpressions())
 			.Skip(request.Skip).Take(request.Take > 0 ? request.Take : int.MaxValue)
@@ -100,3 +108,4 @@ internal class GetMediaQueryHandler : IRequestHandler<GetMediaQuery, GetMediaRes
 		};
 	}
 }
+

@@ -104,6 +104,7 @@ internal static class MappingExtensions
 		source.MediaUrl = dto.MediaUrl;
 		source.Tags = (await tagConversion.Invoke(source.Id, source.Tags, dto.Tags, cancellationToken)).ToList();
 		source.Description = dto.Description;
+		source.IsPublic = dto.IsPublic;
 		return source;
 	}
 }
