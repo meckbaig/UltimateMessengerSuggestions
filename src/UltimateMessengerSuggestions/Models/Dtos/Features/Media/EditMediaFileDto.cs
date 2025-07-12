@@ -12,7 +12,7 @@ namespace UltimateMessengerSuggestions.Models.Dtos.Features.Media;
 /// <summary>
 /// Information about an editable media file.
 /// </summary>
-public record EditMediaFileDto : IBaseDto, IEditDto
+public record EditMediaFileDto : IEditDto
 {
 	/// <summary>
 	/// Media file type.
@@ -83,21 +83,6 @@ public record EditMediaFileDto : IBaseDto, IEditDto
 			RuleFor(x => x.MessageLocation)
 				.SetValidator(new MessageLocationDto.Validator())
 				.When(x => x.MessageLocation != null);
-		}
-	}
-
-	/// <remarks>
-	/// For filters only
-	/// </remarks>
-	private class Mapping : Profile
-	{
-		public Mapping()
-		{
-			ShouldMapProperty = p => false;
-			CreateMap<MediaFileDto, MediaFile>()
-				.ForMember(d => d.Tags, o => o.MapFrom(s => s.Tags))
-				.ForMember(d => d.PublicId, o => o.MapFrom(s => s.Id))
-				.ForMember(d => d.Description, o => o.MapFrom(s => s.Description));
 		}
 	}
 }
