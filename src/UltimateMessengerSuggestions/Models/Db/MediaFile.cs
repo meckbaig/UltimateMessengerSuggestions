@@ -6,12 +6,17 @@ namespace UltimateMessengerSuggestions.Models.Db;
 /// <summary>
 /// A media file that can be associated with tags.
 /// </summary>
-public class MediaFile : IEntityWithId
+public class MediaFile : IEntityWithId, IEntityWithPublicId
 {
 	/// <summary>
 	/// File identifier.
 	/// </summary>
 	public int Id { get; set; }
+
+	/// <summary>
+	/// Identifier exposed to user.
+	/// </summary>
+	public string PublicId { get; set; } = null!;
 
 	/// <summary>
 	/// Media file type.

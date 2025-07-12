@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using UltimateMessengerSuggestions.Common.Handlers.Interfaces;
 using UltimateMessengerSuggestions.Models.Db;
 using UltimateMessengerSuggestions.Models.Db.Enums;
 using UltimateMessengerSuggestions.Models.Db.ProcedureData;
@@ -7,11 +8,14 @@ using UltimateMessengerSuggestions.Models.Db.ProcedureData;
 namespace UltimateMessengerSuggestions.DbContexts;
 
 /// <inheritdoc/>
-public class AppDbContext : DbContext, IAppDbContext
+internal class AppDbContext : DbContext, IAppDbContext
 {
+	private readonly IGeneratePublicIdHandler _publicIdHandler;
+
 	/// <inheritdoc/>
-	public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+	public AppDbContext(DbContextOptions<AppDbContext> options, IGeneratePublicIdHandler publicIdHandler) : base(options)
 	{
+		_publicIdHandler = publicIdHandler;
 	}
 
 	/// <inheritdoc/>
@@ -29,12 +33,27 @@ public class AppDbContext : DbContext, IAppDbContext
 	/// TODO: remove
 	public DbSet<MediaFileSearchResult> MediaFileSearchResults { get; set; }
 
+	/// <inheritdoc/>
+	public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+	{
+		await _publicIdHandler.AssignPublicIdsAsync(this, cancellationToken);
+
+		return await base.SaveChangesAsync(cancellationToken);
+	}
 
 	/// <inheritdoc/>
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		modelBuilder.Entity<MediaFile>()
 			.UseTptMappingStrategy();
+		modelBuilder.Entity<MediaFile>()
+			.HasIndex(m => m.PublicId)
+			.IsUnique();
+		modelBuilder.Entity<MediaFile>()
+			.Property(m => m.PublicId)
+			.HasMaxLength(8)
+			.IsRequired();
+
 		modelBuilder.Entity<VkVoiceMediaFile>()
 			.ToTable(ToSnakeCase(nameof(VkVoiceMediaFile)));
 

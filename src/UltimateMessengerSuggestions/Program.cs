@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Options;
 using Serilog;
 using UltimateMessengerSuggestions.Common;
+using UltimateMessengerSuggestions.Common.Handlers;
+using UltimateMessengerSuggestions.Common.Handlers.Interfaces;
 using UltimateMessengerSuggestions.Extensions;
 using UltimateMessengerSuggestions.Services;
 using UltimateMessengerSuggestions.Services.Interfaces;
@@ -17,6 +19,8 @@ try
 	builder.Logging.ClearProviders().AddSerilog(Log.Logger);
 	builder.Services.AddDatabaseConnection();
 	builder.Services.AddTransient<IMediaUploader, WebDavUploader>();
+	builder.Services.AddScoped<IPublicIdGenerator, PublicIdGenerator>();
+	builder.Services.AddScoped<IGeneratePublicIdHandler, GeneratePublicIdHandler>();
 	builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 	builder.Services.AddControllersWithJsonNamingPolicy();
 	builder.Services.AddMediatRFromAssembly();

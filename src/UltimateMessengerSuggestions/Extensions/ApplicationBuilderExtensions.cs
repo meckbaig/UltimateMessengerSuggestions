@@ -1,12 +1,11 @@
 using Asp.Versioning.ApiExplorer;
-using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using System.Net;
 using System.Text.Json;
-using UltimateMessengerSuggestions.Common.ExceptionHandlers;
+using UltimateMessengerSuggestions.Common.Handlers.Exceptions;
 using UltimateMessengerSuggestions.Common.HealthChecks;
 using UltimateMessengerSuggestions.Common.Options;
 

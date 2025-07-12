@@ -6,7 +6,7 @@ using System.Text.Json;
 using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.Extensions;
 
-namespace UltimateMessengerSuggestions.Common.ExceptionHandlers;
+namespace UltimateMessengerSuggestions.Common.Handlers.Exceptions;
 
 internal class CustomExceptionHandler : IExceptionHandler
 {
