@@ -19,6 +19,16 @@ public class MediaFile : IEntityWithId, IEntityWithPublicId
 	public string PublicId { get; set; } = null!;
 
 	/// <summary>
+	/// Identifier of the user who owns the media file.
+	/// </summary>
+	public int OwnerId { get; set; }
+
+	/// <summary>
+	/// Indicates whether the media file is free to use.
+	/// </summary>
+	public bool IsPublic { get; set; } = false;
+
+	/// <summary>
 	/// Media file type.
 	/// </summary>
 	public MediaType MediaType { get; set; }
@@ -37,4 +47,9 @@ public class MediaFile : IEntityWithId, IEntityWithPublicId
 	/// List of tags associated with the file.
 	/// </summary>
 	public ICollection<Tag> Tags { get; set; } = [];
+
+	/// <summary>
+	/// User who created the media file.
+	/// </summary>
+	public User Owner { get; set; } = null!;
 }

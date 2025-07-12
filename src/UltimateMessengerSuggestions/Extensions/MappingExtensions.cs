@@ -36,6 +36,7 @@ internal static class MappingExtensions
 
 	public static async Task<MediaFile> ToDbModelAsync(
 		this EditMediaFileDto source,
+		int ownerId,
 		Func<IEnumerable<string>, CancellationToken, Task<IEnumerable<Tag>>> tagConversion,
 		CancellationToken cancellationToken = default)
 	{
@@ -58,6 +59,7 @@ internal static class MappingExtensions
 
 		mediaFile.Description = source.Description;
 		mediaFile.MediaUrl = source.MediaUrl;
+		mediaFile.OwnerId = ownerId;
 
 		if (Enum.TryParse<MediaType>(source.MediaType, true, out var mediaType))
 		{
