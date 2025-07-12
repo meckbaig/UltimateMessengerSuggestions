@@ -74,9 +74,9 @@ public record MediaFileDto : IBaseDto
 		public Mapping()
 		{
 			ShouldMapProperty = p => false;
-			CreateMap<MediaFileDto, MediaFile>()
+			CreateMap<MediaFile, MediaFileDto>()
 				.ForMember(d => d.Tags, o => o.MapFrom(s => s.Tags))
-				.ForMember(d => d.PublicId, o => o.MapFrom(s => s.Id))
+				.ForMember(d => d.Id, o => o.MapFrom(s => s.PublicId))
 				.ForMember(d => d.Description, o => o.MapFrom(s => s.Description));
 		}
 	}
