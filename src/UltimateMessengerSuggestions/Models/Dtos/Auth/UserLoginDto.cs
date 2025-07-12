@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-
 namespace UltimateMessengerSuggestions.Models.Dtos.Auth;
 
 /// <summary>
@@ -8,6 +5,11 @@ namespace UltimateMessengerSuggestions.Models.Dtos.Auth;
 /// </summary>
 public record UserLoginDto
 {
+	/// <summary>
+	/// Unique identifier for the user in the system.
+	/// </summary>
+	public int UserId { get; }
+
 	/// <summary>
 	/// Unique identifier for the user from external messenger.
 	/// </summary>
@@ -21,10 +23,12 @@ public record UserLoginDto
 	/// <summary>
 	/// Creates a new instance of <see cref="UserLoginDto"/>.
 	/// </summary>
+	/// <param name="userId">Unique identifier for the user in the system.</param>
 	/// <param name="messengerId">Unique identifier for the user from external messenger.</param>
 	/// <param name="client">Client name from which the user is registered.</param>
-	public UserLoginDto(string messengerId, string client)
+	public UserLoginDto(int userId, string messengerId, string client)
 	{
+		UserId = userId;
 		MessengerId = messengerId;
 		Client = client;
 	}

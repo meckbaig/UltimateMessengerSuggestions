@@ -25,6 +25,7 @@ internal class JwtProvider : IJwtProvider
 		var tokenHandler = new JsonWebTokenHandler();
 		var claims = new List<Claim>
 		{
+			new(CustomClaim.UserId, account.UserId.ToString()),
 			new(CustomClaim.MessengerId, account.MessengerId),
 			new(CustomClaim.Client, account.Client),
 		};
@@ -46,13 +47,18 @@ internal class JwtProvider : IJwtProvider
 	public UserLoginDto GetUserLoginFromClaimsPrincipal(ClaimsPrincipal claimsPrincipal)
 	{
 		return new UserLoginDto(
-			claimsPrincipal.FindFirst(CustomClaim.MessengerId)?.Value ?? throw new UnauthorizedException("User key doesn't have required claims."),
-			claimsPrincipal.FindFirst(CustomClaim.Client)?.Value ?? throw new UnauthorizedException("User key doesn't have required claims."));
+			Convert.ToInt32(claimsPrincipal.FindFirst(CustomClaim.UserId)?.Value 
+				?? throw new UnauthorizedException("User key doesn't have required claims.")),
+			claimsPrincipal.FindFirst(CustomClaim.MessengerId)?.Value 
+				?? throw new UnauthorizedException("User key doesn't have required claims."),
+			claimsPrincipal.FindFirst(CustomClaim.Client)?.Value 
+				?? throw new UnauthorizedException("User key doesn't have required claims."));
 	}
 }
 
 internal static class CustomClaim
 {
+	public const string UserId = "userId";
 	public const string MessengerId = "messengerId";
 	public const string Client = "client";
 }
