@@ -129,6 +129,7 @@ internal static class ServiceCollectionExtensions
 		return services.AddMediatR(c =>
 		{
 			c.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+			c.AddBehavior(typeof(IPipelineBehavior<,>), typeof(UserContextInjectionBehavior<,>));
 			c.AddBehavior(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
 			c.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 		});

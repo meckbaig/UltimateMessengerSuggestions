@@ -23,6 +23,7 @@ try
 	builder.Services.AddScoped<IGeneratePublicIdHandler, GeneratePublicIdHandler>();
 	builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 	builder.Services.AddControllersWithJsonNamingPolicy();
+	builder.Services.AddHttpContextAccessor();
 	builder.Services.AddMediatRFromAssembly();
 	builder.Services.AddAutoMapperFromAssembly();
 	builder.Services.AddValidatorsFromAssembly();
