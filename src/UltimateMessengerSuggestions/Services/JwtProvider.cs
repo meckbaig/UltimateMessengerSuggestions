@@ -3,8 +3,10 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using UltimateMessengerSuggestions.Common.Exceptions;
 using UltimateMessengerSuggestions.Common.Options;
 using UltimateMessengerSuggestions.Models.Db;
+using UltimateMessengerSuggestions.Models.Dtos.Auth;
 using UltimateMessengerSuggestions.Services.Interfaces;
 
 namespace UltimateMessengerSuggestions.Services;
@@ -39,6 +41,13 @@ internal class JwtProvider : IJwtProvider
 		};
 
 		return tokenHandler.CreateToken(tokenDesctiptor);
+	}
+
+	public UserLoginDto GetUserLoginFromClaimsPrincipal(ClaimsPrincipal claimsPrincipal)
+	{
+		return new UserLoginDto(
+			claimsPrincipal.FindFirst(CustomClaim.MessengerId)?.Value ?? throw new UnauthorizedException("User key doesn't have required claims."),
+			claimsPrincipal.FindFirst(CustomClaim.Client)?.Value ?? throw new UnauthorizedException("User key doesn't have required claims."));
 	}
 }
 
