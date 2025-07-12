@@ -1,5 +1,8 @@
 using Meckbaig.Cqrs.Abstractons;
 using Meckbaig.Cqrs.ListFliters.Abstractions;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace UltimateMessengerSuggestions.Common.Abstractions;
 
@@ -13,9 +16,14 @@ public abstract record BaseAuthentificatedListQuery<TUserLoginDto, TResponse> : 
 	where TUserLoginDto : class
 {
 	/// <inheritdoc/>
+	[SwaggerIgnore]
+	[JsonIgnore]
 	virtual public TUserLoginDto? UserLogin { get; private set; }
 
 	/// <inheritdoc/>
+	[SwaggerIgnore]
+	[JsonIgnore]
+	[MemberNotNullWhen(true, nameof(UserLogin))]
 	virtual public bool IsAuthenticated => UserLogin != null;
 
 	/// <inheritdoc/>

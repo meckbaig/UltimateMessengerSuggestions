@@ -4,7 +4,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Logs;
@@ -167,11 +166,11 @@ internal static class ServiceCollectionExtensions
 		{
 			options.IncludeXmlComments(Assembly.GetExecutingAssembly());
 			options.EnableAnnotations();
-			options.DocInclusionPredicate(((docName, apiDesc) =>
+			options.DocInclusionPredicate((docName, apiDesc) =>
 			{
 				var groupName = apiDesc.GroupName;
 				return groupName == docName;
-			}));
+			});
 		});
 
 		return services;
@@ -247,5 +246,5 @@ internal static class ServiceCollectionExtensions
 					.AllowAnyHeader());
 		});
 		return services;
-	}	
+	}
 }

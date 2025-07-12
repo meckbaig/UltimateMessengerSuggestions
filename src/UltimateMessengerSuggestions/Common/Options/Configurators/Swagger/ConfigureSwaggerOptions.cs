@@ -35,7 +35,8 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : 
 					Name = "meckbaig"
 				}
 			});
-			options.ParameterFilter<CamelCaseQueryParameterFilter>();
+			options.ParameterFilter<CamelCaseQueryParameterFilter>(); 
+			options.DocumentFilter<RemoveSwaggerIgnoredParamsDocumentFilter>();
 
 			options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
 			{
