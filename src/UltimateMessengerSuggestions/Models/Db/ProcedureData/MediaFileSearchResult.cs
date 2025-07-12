@@ -4,6 +4,7 @@ namespace UltimateMessengerSuggestions.Models.Db.ProcedureData;
 public class MediaFileSearchResult
 {
 	public int Id { get; set; }
+	public string PublicId { get; set; }
 	public string Description { get; set; }
 	public string MediaType { get; set; }
 	public string MediaUrl { get; set; }
