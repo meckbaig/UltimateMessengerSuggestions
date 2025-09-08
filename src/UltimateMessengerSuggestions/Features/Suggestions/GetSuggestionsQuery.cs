@@ -35,7 +35,7 @@ public record GetSuggestionsQuery : BaseAuthentificatedRequest<UserLoginDto, Get
 	/// Execution type for the query.
 	/// </summary>
 	[FromQuery]
-	public string QueryExecutionType { get; set; } = ExecutionType.Ef;
+	public string QueryExecutionType { get; set; } = ExecutionType.ProcedureSimple;
 
 	/// <summary>
 	/// Execution types for the query.
@@ -53,9 +53,9 @@ public record GetSuggestionsQuery : BaseAuthentificatedRequest<UserLoginDto, Get
 		public const string Procedure = "procedure";
 
 		/// <summary>
-		/// Entity Framework Core (EF) compiled query execution type.
+		/// Stored procedure execution type (with strong similarity).
 		/// </summary>
-		public const string CompiledEf = "ef-compiled";
+		public const string ProcedureSimple = "procedure-simple";
 	}
 }
 
@@ -124,86 +124,13 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 		{
 			case "procedure":
 				return await FindByTagsUsingProcedureAsync(fullPhrases, rawWords, userId, cancellationToken);
+			case "procedure-simple":
+				return await FindByTagsUsingSimpleProcedureAsync(loweredQuery, userId, cancellationToken);
 			case "ef":
 				return await FindByTagsUsingEf3Async(fullPhrases, rawWords, userId, cancellationToken);
-			case "ef-compiled":
-				// return FindByTagsUsingEfCompiledAsync(fullPhrases, rawWords, cancellationToken);
 			default:
 				throw new NotImplementedException($"Execution type '{execType}' is not implemented.");
 		}
-	}
-
-	// 60-80ms
-	private async Task<List<MediaFile>> FindByTagsUsingEfAsync(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
-	{
-		return await _context.MediaFiles
-			.AsNoTracking()
-			.Where(m => m.Tags.Any(t =>
-				fullPhrases.Contains(t.Name.ToLower()) ||
-				fullPhrases.Any(p => EF.Functions.ILike(t.Name, "%" + p + "%")) ||
-				rawWords.Any(w => EF.Functions.ILike(t.Name, "%" + w + "%"))))
-			.Select(m => new
-			{
-				Media = m,
-				Relevance =
-					m.Tags.Count(t => fullPhrases.Contains(t.Name.ToLower())) * 3 +
-					m.Tags.Count(t => fullPhrases.Any(p => EF.Functions.ILike(t.Name, "%" + p + "%"))) * 2 +
-					m.Tags.Count(t => rawWords.Any(w => EF.Functions.ILike(t.Name, "%" + w + "%")))
-			})
-			.Where(x => x.Relevance > 0)
-			.OrderByDescending(x => x.Relevance)
-			.ThenBy(x => x.Media.Id)
-			.Select(x => x.Media)
-			.Include(m => m.Tags)
-			.ToListAsync(cancellationToken);
-	}
-
-	// 50-70ms
-	public async Task<List<MediaFile>> FindByTagsUsingEf2Async(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
-	{
-		// Приводим фразы для точного совпадения в нижний регистр
-		var lowerFullPhrases = fullPhrases.Select(fp => fp.ToLower()).ToArray();
-
-		var query = _context.MediaFiles
-			.AsNoTracking()
-			.Select(mf => new
-			{
-				MediaFile = mf,
-				mf.Tags,
-				ExactMatches = mf.Tags.Count(t => lowerFullPhrases.Contains(t.Name.ToLower())) * 3,
-				PhraseMatches = mf.Tags.Count(t =>
-					!lowerFullPhrases.Contains(t.Name.ToLower()) &&
-					fullPhrases.Any(fp => EF.Functions.ILike(t.Name, "%" + fp + "%"))) * 2,
-				WordMatches = mf.Tags.Count(t =>
-					rawWords.Any(rw => EF.Functions.ILike(t.Name, "%" +rw + "%")))
-	
-			})
-			.Where(x => x.ExactMatches + x.PhraseMatches + x.WordMatches > 0)
-			.Select(x => new
-			{
-				x.MediaFile,
-				x.Tags,
-				TotalScore = x.ExactMatches + x.PhraseMatches + x.WordMatches
-			})
-			.OrderByDescending(x => x.TotalScore)
-			.ThenBy(x => x.MediaFile.Id);
-
-		// Материализуем запрос
-		var results = await query.ToListAsync(cancellationToken);
-
-		// Собираем финальные объекты
-		return results.Select(x =>
-		{
-			// Обрабатываем наследование
-			if (x.MediaFile is VkVoiceMediaFile voiceFile)
-			{
-				voiceFile.Tags = x.Tags.ToList();
-				return voiceFile;
-			}
-
-			x.MediaFile.Tags = x.Tags.ToList();
-			return x.MediaFile;
-		}).ToList();
 	}
 
 	// 2ms
@@ -251,56 +178,6 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 		return mediaFiles;
 	}
 
-	//private List<MediaFile> FindByTagsUsingEfCompiledAsync(IEnumerable<string> fullPhrases, IEnumerable<string> rawWords, CancellationToken cancellationToken)
-	//{
-	//	// Этап 1: Получаем ID через компилированный запрос
-	//	var mediaFileIds = GetSuggestionsIdsCompiled((AppDbContext)_context, fullPhrases.ToArray(), rawWords.ToArray());
-
-	//	// Этап 2: Получаем медиафайлы по ID
-	//	var mediaFiles = GetSuggestionsFilesByIdsCompiled((AppDbContext)_context, mediaFileIds);
-
-	//	return mediaFiles
-	//		.AsEnumerable()
-	//		.Select(mf => new
-	//		{
-	//			MediaFile = mf,
-	//			Score = CalculateScore(mf, fullPhrases, rawWords)
-	//		})
-	//		.Where(x => x.Score > 0)
-	//		.OrderByDescending(x => x.Score)
-	//		.ThenBy(x => x.MediaFile.Id)
-	//		.Select(x => x.MediaFile)
-	//		.ToList();
-	//}
-
-	//private static readonly Func<AppDbContext, string[], string[], List<int>> GetSuggestionsIdsCompiled =
-	//	EF.CompileQuery((AppDbContext context, string[] fullPhrases, string[] rawWords) =>
-	//		context.Tags
-	//			.AsNoTracking()
-	//			.Where(t =>
-	//				fullPhrases.Contains(t.Name) ||
-	//				rawWords.Any(rw => t.Name.Contains(rw)))
-	//			.SelectMany(t => t.MediaFiles.Select(mf => mf.Id))
-	//			.Distinct()
-	//			.ToList());
-
-	//private static readonly Func<AppDbContext, IEnumerable<int>, List<MediaFile>> GetSuggestionsFilesByIdsCompiled =
-	//	EF.CompileQuery((AppDbContext context, IEnumerable<int> ids) =>
-	//		context.MediaFiles
-	//			.AsNoTracking()
-	//			.Include(mf => mf.Tags)
-	//			.Where(mf => ids.Contains(mf.Id))
-	//			.ToList());
-
-	//private static int CalculateScore(MediaFile mf, IEnumerable<string> fullPhrases, IEnumerable<string> rawWords)
-	//{
-	//	// Все данные уже в нижнем регистре, поэтому просто Contains
-	//	var exactMatches = mf.Tags.Count(t => fullPhrases.Contains(t.Name)) * 3;
-	//	var wordMatches = mf.Tags.Count(t => rawWords.Any(rw => t.Name.Contains(rw)));
-
-	//	return exactMatches + wordMatches;
-	//}
-
 	// 1ms
 	public async Task<List<MediaFile>> FindByTagsUsingProcedureAsync(
 		IEnumerable<string> fullPhrases,
@@ -315,32 +192,74 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 
 		// data grouping and transformation
 		return results
-		   .GroupBy(r => r.Id)
-		   .Select(g =>
-		   {
-			   var first = g.First();
-			   var tags = g
-				   .Where(x => x.TagId.HasValue)
-				   .Select(x => new Tag { Id = x.TagId.Value, Name = x.TagName })
-				   .ToList();
+			.GroupBy(r => r.Id)
+			.Select(g =>
+			{
+				var first = g.First();
+				var tags = g
+					.Where(x => x.TagId.HasValue)
+					.Select(x => new Tag { Id = x.TagId.Value, Name = x.TagName })
+					.ToList();
 
-			   MediaFile mediaFile = first.Discriminator == "VkVoiceMediaFile"
-				   ? new VkVoiceMediaFile
-				   {
-					   VkConversation = first.VkConversation,
-					   VkMessageId = first.VkMessageId.Value
-				   }
-				   : new MediaFile();
+				MediaFile mediaFile = first.Discriminator == "VkVoiceMediaFile"
+					? new VkVoiceMediaFile
+					{
+						VkConversation = first.VkConversation,
+						VkMessageId = first.VkMessageId.Value
+					}
+					: new MediaFile();
 
-			   mediaFile.Id = first.Id;
-			   mediaFile.PublicId = first.PublicId;
-			   mediaFile.Description = first.Description;
-			   mediaFile.MediaType = Enum.Parse<MediaType>(first.MediaType, true);
-			   mediaFile.MediaUrl = first.MediaUrl;
-			   mediaFile.Tags = tags;
+				mediaFile.Id = first.Id;
+				mediaFile.PublicId = first.PublicId;
+				mediaFile.Description = first.Description;
+				mediaFile.MediaType = Enum.Parse<MediaType>(first.MediaType, true);
+				mediaFile.MediaUrl = first.MediaUrl;
+				mediaFile.Tags = tags;
 
-			   return mediaFile;
-		   })
-		   .ToList();
+				return mediaFile;
+			})
+			.ToList();
+	}
+
+	// 1ms
+	public async Task<List<MediaFile>> FindByTagsUsingSimpleProcedureAsync(
+		string fullPhrase,
+		int userId,
+		CancellationToken cancellationToken)
+	{
+		// procedure call
+		var results = await _context.MediaFileSearchResults
+			.FromSqlInterpolated($"SELECT * FROM find_media_by_tags_5({fullPhrase}, {userId})")
+			.ToListAsync(cancellationToken);
+
+		// data grouping and transformation
+		return results
+			.GroupBy(r => r.Id)
+			.Select(g =>
+			{
+				var first = g.First();
+				var tags = g
+					.Where(x => x.TagId.HasValue)
+					.Select(x => new Tag { Id = x.TagId.Value, Name = x.TagName })
+					.ToList();
+
+				MediaFile mediaFile = first.Discriminator == "VkVoiceMediaFile"
+					? new VkVoiceMediaFile
+					{
+						VkConversation = first.VkConversation,
+						VkMessageId = first.VkMessageId.Value
+					}
+					: new MediaFile();
+
+				mediaFile.Id = first.Id;
+				mediaFile.PublicId = first.PublicId;
+				mediaFile.Description = first.Description;
+				mediaFile.MediaType = Enum.Parse<MediaType>(first.MediaType, true);
+				mediaFile.MediaUrl = first.MediaUrl;
+				mediaFile.Tags = tags;
+
+				return mediaFile;
+			})
+			.ToList();
 	}
 }

@@ -11,6 +11,8 @@ namespace UltimateMessengerSuggestions.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
 		{
+			migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
+
 			migrationBuilder.CreateTable(
 				name: "media_files",
 				columns: table => new
