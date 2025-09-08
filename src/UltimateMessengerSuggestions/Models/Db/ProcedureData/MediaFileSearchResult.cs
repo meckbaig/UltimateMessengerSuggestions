@@ -13,4 +13,9 @@ public class MediaFileSearchResult
 	public string? Discriminator { get; set; }
 	public int? TagId { get; set; }
 	public string? TagName { get; set; }
+
+	public override string ToString()
+	{
+		return $"{Id} {Description} {TagName}";
+	}
 }
