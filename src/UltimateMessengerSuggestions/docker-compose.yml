@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  ultimate_messenger:
+    build: .
+    container_name: ultimate_messenger
+    deploy:
+      resources:
+        limits:
+          memory: 1024Mb
+          cpus: "2"
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: unless-stopped
