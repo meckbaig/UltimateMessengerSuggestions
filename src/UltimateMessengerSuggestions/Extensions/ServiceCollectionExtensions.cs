@@ -31,6 +31,9 @@ internal static class ServiceCollectionExtensions
 	internal static IServiceCollection AddAppOptions(this IServiceCollection services)
 	{
 		services
+			.AddOptionsWithValidateOnStart<SwaggerAuthOptions>()
+			.BindConfiguration(SwaggerAuthOptions.ConfigurationSectionName);
+		services
 			.AddOptionsWithValidateOnStart<JwtOptions>()
 			.BindConfiguration(JwtOptions.ConfigurationSectionName);
 		services
@@ -60,6 +63,7 @@ internal static class ServiceCollectionExtensions
 
 	internal static IServiceCollection AddAppOptionsValidators(this IServiceCollection services)
 	{
+		services.AddSingleton<IValidateOptions<SwaggerAuthOptions>, SwaggerAuthOptionsValidator>();
 		services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
 		services.AddSingleton<IValidateOptions<WebDavOptions>, WebDavOptionsValidator>();
 		services.AddSingleton<IValidateOptions<ApplicationOptions>, ApplicationOptionsValidator>();

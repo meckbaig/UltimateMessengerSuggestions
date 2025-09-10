@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Serilog;
+using System.Text;
 using UltimateMessengerSuggestions.Common;
 using UltimateMessengerSuggestions.Common.Handlers;
 using UltimateMessengerSuggestions.Common.Handlers.Interfaces;
@@ -36,6 +37,7 @@ try
 
 	var app = builder.Build();
 
+	app.RequireSwaggerAuthorization();
 	app.UseSwaggerDocumentation();
 	app.UseCustomExceptionHandler();
 	app.UseCors("AllowAllOrigins");

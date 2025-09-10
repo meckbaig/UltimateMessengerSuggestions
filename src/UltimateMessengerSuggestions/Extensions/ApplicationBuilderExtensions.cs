@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using UltimateMessengerSuggestions.Common.Handlers.Exceptions;
 using UltimateMessengerSuggestions.Common.HealthChecks;
@@ -13,6 +14,47 @@ namespace UltimateMessengerSuggestions.Extensions;
 
 internal static class ApplicationBuilderExtensions
 {
+	/// <summary>
+	/// Adds a login requirement before accessing Swagger.
+	/// </summary>
+	/// <param name="builder"></param>
+	/// <returns></returns>
+	public static IApplicationBuilder RequireSwaggerAuthorization(this IApplicationBuilder builder)
+	{
+		var options = builder.ApplicationServices
+			.GetRequiredService<IOptions<SwaggerAuthOptions>>()
+			.Value;
+		return options.RequireLogin
+			? builder
+			.UseWhen(context => context.Request.Path.StartsWithSegments("/swagger"), appBuilder =>
+			{
+				appBuilder.Use(async (context, next) =>
+				{
+					string authHeader = context.Request.Headers["Authorization"];
+
+					if (authHeader != null && authHeader.StartsWith("Basic "))
+					{
+						var encodedUsernamePassword = authHeader.Substring("Basic ".Length).Trim();
+						var decodedUsernamePassword = Encoding.UTF8.GetString(Convert.FromBase64String(encodedUsernamePassword));
+
+						var parts = decodedUsernamePassword.Split(':');
+						var username = parts[0];
+						var password = parts[1];
+
+						if (username == options.Username && password == options.Password)
+						{
+							await next.Invoke();
+							return;
+						}
+					}
+
+					context.Response.Headers["WWW-Authenticate"] = "Basic";
+					context.Response.StatusCode = 401;
+				});
+			})
+			: builder;
+	}
+
 	/// <summary>
 	/// Adds and configures Swagger documentation in the application
 	/// </summary>
