@@ -26,7 +26,8 @@ internal static class MappingExtensions
 			mediaUrl: source.MediaUrl,
 			mediaType: source.MediaType.ToString().ToLower(),
 			tags: source.Tags.Select(t => t.Name).ToList(),
-			messageLocation: location);
+			messageLocation: location,
+			isPublic: source.IsPublic);
 	}
 
 	public static IEnumerable<MediaFileDto> ToDtos(this IEnumerable<MediaFile> source)
@@ -59,6 +60,7 @@ internal static class MappingExtensions
 
 		mediaFile.Description = source.Description;
 		mediaFile.MediaUrl = source.MediaUrl;
+		mediaFile.IsPublic = source.IsPublic;
 		mediaFile.OwnerId = ownerId;
 
 		if (Enum.TryParse<MediaType>(source.MediaType, true, out var mediaType))
