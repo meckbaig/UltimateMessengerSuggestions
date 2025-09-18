@@ -53,7 +53,7 @@ public record GetSuggestionsQuery : BaseAuthentificatedRequest<UserLoginDto, Get
 		public const string Procedure = "procedure";
 
 		/// <summary>
-		/// Stored procedure execution type (with strong similarity).
+		/// Stored procedure execution type (with strong similarity and 1/3 desc).
 		/// </summary>
 		public const string ProcedureSimple = "procedure-simple";
 	}
@@ -229,7 +229,7 @@ internal class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, GetS
 	{
 		// procedure call
 		var results = await _context.MediaFileSearchResults
-			.FromSqlInterpolated($"SELECT * FROM find_media_by_tags_5({fullPhrase}, {userId})")
+			.FromSqlInterpolated($"SELECT * FROM find_media_by_tags_7({fullPhrase}, {userId})")
 			.ToListAsync(cancellationToken);
 
 		// data grouping and transformation
